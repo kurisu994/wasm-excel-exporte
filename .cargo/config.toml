@@ -1,2 +1,17 @@
+# WebAssembly 测试配置
+[target.wasm32-unknown-unknown]
+runner = "wasm-bindgen-test-runner"
+
+# 构建优化配置
 [build]
-target = "wasm32-unknown-unknown"
+# 默认使用 wasm32 目标
+# target = "wasm32-unknown-unknown"
+
+[profile.release]
+# 启用链接时优化（LTO）以减小文件大小
+lto = true
+# 优化代码大小
+opt-level = "z"
+# 减少代码生成单元以提高优化效果
+codegen-units = 1
+

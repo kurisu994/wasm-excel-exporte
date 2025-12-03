@@ -22,11 +22,12 @@
 
 - 🔒 **内存安全**：使用 RAII 模式确保资源自动管理和正确释放
 - 🛡️ **错误处理**：全面的输入验证和异常处理，消除所有潜在的 panic 点
-- 🚀 **高性能**：Rust 原生性能，零拷贝内存操作
+- 🚀 **高性能**：Rust 原生性能，零拷贝内存操作，使用 wee_alloc 优化内存
 - 🌐 **浏览器兼容**：支持所有现代浏览器和 WebAssembly 环境
-- 📝 **文件名自定义**：支持用户指定导出文件名
+- 📝 **文件名自定义**：支持用户指定导出文件名，内置文件名安全验证
+- 📊 **进度回调**：支持大型表格导出时的实时进度反馈
 - 🔄 **向后兼容**：保留旧版本 API 以确保平滑迁移
-- 🎯 **轻量级**：优化的 WebAssembly 输出，快速加载
+- 🎯 **轻量级**：优化的 WebAssembly 输出（~514KB），快速加载
 
 ## 🚀 快速开始
 
@@ -60,7 +61,7 @@ try {
 ### 高级用法
 
 ```javascript
-import init, { export_table_to_csv } from 'wasm-excel-exporter';
+import init, { export_table_to_csv, export_table_to_csv_with_progress } from 'wasm-excel-exporter';
 
 await init();
 
@@ -72,6 +73,17 @@ const tables = ['table1', 'table2', 'table3'];
 tables.forEach((tableId, index) => {
     export_table_to_csv(tableId, `export-${index + 1}.csv`);
 });
+
+// 大型表格导出（带进度反馈）
+export_table_to_csv_with_progress(
+    'large-data-table',
+    '大数据导出.csv',
+    (progress) => {
+        console.log(`导出进度: ${Math.round(progress)}%`);
+        // 更新页面上的进度条
+        updateProgressBar(progress);
+    }
+);
 ```
 
 ### HTML 示例
@@ -122,6 +134,109 @@ tables.forEach((tableId, index) => {
 </html>
 ```
 
+### 带进度条的完整示例
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        .progress-container {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            padding: 5px;
+            display: none;
+        }
+        .progress-bar {
+            width: 0%;
+            height: 30px;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+            transition: width 0.3s ease;
+        }
+    </style>
+    <script type="module">
+        import init, { export_table_to_csv_with_progress } from './pkg/wasm_excel_exporter.js';
+
+        async function main() {
+            await init();
+
+            document.getElementById('export-btn').onclick = () => {
+                const progressContainer = document.getElementById('progress-container');
+                const progressBar = document.getElementById('progress-bar');
+                const progressText = document.getElementById('progress-text');
+                
+                // 显示进度条
+                progressContainer.style.display = 'block';
+                progressBar.style.width = '0%';
+                
+                try {
+                    export_table_to_csv_with_progress(
+                        'data-table',
+                        '用户数据.csv',
+                        (progress) => {
+                            progressBar.style.width = `${progress}%`;
+                            progressText.textContent = `${Math.round(progress)}%`;
+                        }
+                    );
+                    
+                    // 导出完成后隐藏进度条
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        alert('导出成功！');
+                    }, 500);
+                } catch (error) {
+                    progressContainer.style.display = 'none';
+                    alert('导出失败: ' + error);
+                }
+            };
+        }
+
+        main();
+    </script>
+</head>
+<body>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>姓名</th>
+                <th>年龄</th>
+                <th>城市</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>张三</td>
+                <td>28</td>
+                <td>北京</td>
+            </tr>
+            <tr>
+                <td>李四</td>
+                <td>32</td>
+                <td>上海</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <button id="export-btn">导出 CSV（带进度）</button>
+    
+    <div class="progress-container" id="progress-container">
+        <div class="progress-bar" id="progress-bar">
+            <span id="progress-text">0%</span>
+        </div>
+    </div>
+</body>
+</html>
+```
+
+更多详细示例请查看 [EXAMPLES.md](./EXAMPLES.md) 文件。
+
 ## 📚 API 参考
 
 ### `export_table_to_csv(table_id, filename?)`
@@ -144,6 +259,45 @@ export_table_to_csv('my-table');
 export_table_to_csv('my-table', 'report.csv');
 ```
 
+### `export_table_to_csv_with_progress(table_id, filename?, progress_callback?)` 🆕
+
+将指定 ID 的 HTML 表格导出为 CSV 文件，并提供进度回调功能。
+
+**参数：**
+- `table_id` (`string`): 要导出的 HTML 表格元素的 ID
+- `filename` (`string`, 可选): 导出文件的名称，默认为 "table_export.csv"
+- `progress_callback` (`Function`, 可选): 进度回调函数，接收进度百分比 (0-100)
+
+**返回值：**
+- `Result<(), JsValue>`: 成功时返回 `undefined`，失败时抛出异常
+
+**示例：**
+```javascript
+import init, { export_table_to_csv_with_progress } from 'wasm-excel-exporter';
+
+await init();
+
+// 带进度回调的导出
+export_table_to_csv_with_progress(
+    'large-table',
+    '大数据导出.csv',
+    (progress) => {
+        console.log(`导出进度: ${progress.toFixed(2)}%`);
+        // 更新进度条 UI
+        document.getElementById('progress').style.width = `${progress}%`;
+    }
+);
+```
+
+**文件名安全验证：**
+
+两个导出函数都会自动验证文件名的安全性：
+- ✅ 自动检查并拒绝路径分隔符 (`/`, `\`)
+- ✅ 拒绝危险字符 (`<`, `>`, `:`, `"`, `|`, `?`, `*`)
+- ✅ 检查文件名长度（最大 255 字符）
+- ✅ 拒绝 Windows 保留名称（CON, PRN, AUX, NUL 等）
+- ✅ 拒绝以点或空格开头/结尾的文件名
+
 ### `export_table_to_excel(table_id)` ⚠️ 已弃用
 
 为了保持向后兼容而保留的旧版本函数。
@@ -154,7 +308,7 @@ export_table_to_csv('my-table', 'report.csv');
 
 ### 环境要求
 
-- Rust 1.75+ (推荐使用最新稳定版)
+- Rust 1.82+ (推荐使用最新稳定版)
 - Node.js 16+
 - wasm-pack
 
