@@ -94,12 +94,20 @@
 
 ### 📦 安装方式
 
-#### 方式 1：NPM/Yarn（推荐）
+#### 方式 1：pnpm/NPM/Yarn/Bun（推荐 pnpm）
 
 ```bash
+# pnpm（推荐 - 更快的安装速度和更小的磁盘占用）
+pnpm add wasm-excel-exporter
+
+# NPM
 npm install wasm-excel-exporter
-# 或
+
+# Yarn
 yarn add wasm-excel-exporter
+
+# Bun
+bun add wasm-excel-exporter
 ```
 
 #### 方式 2：直接使用（无需构建）
