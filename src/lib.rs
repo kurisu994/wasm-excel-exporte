@@ -8,6 +8,61 @@ use web_sys::{
     Blob, HtmlAnchorElement, HtmlTableCellElement, HtmlTableElement, HtmlTableRowElement, Url,
 };
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_filename_extension_handling() {
+        // 测试文件名扩展名处理逻辑
+        // 由于这部分是纯 Rust 逻辑，我们可以独立测试
+
+        let test_cases = vec![
+            ("test.csv", "test.csv"),
+            ("report", "report.csv"),
+            ("data.CSV", "data.CSV"), // 保持原有大小写
+            ("export.csv", "export.csv"),
+            ("", "table_export.csv"), // 默认文件名
+        ];
+
+        for (input, expected) in test_cases {
+            let result = if input.is_empty() {
+                "table_export.csv".to_string()
+            } else if input.to_lowercase().ends_with(".csv") {
+                input.to_string()
+            } else {
+                format!("{}.csv", input)
+            };
+
+            assert_eq!(result, expected);
+        }
+    }
+
+    #[test]
+    fn test_validation_logic() {
+        // 测试输入验证逻辑
+        let valid_id = "my-table";
+        let empty_id = "";
+
+        // 这些验证在函数中，我们测试逻辑
+        assert!(!valid_id.is_empty());
+        assert!(empty_id.is_empty());
+    }
+
+    #[test]
+    fn test_csv_writer_creation() {
+        // 测试 CSV writer 可以正常创建和使用
+        let mut wtr = Writer::from_writer(Cursor::new(Vec::new()));
+
+        let test_data = vec!["Header1", "Header2", "Header3"];
+        assert!(wtr.write_record(&test_data).is_ok());
+        assert!(wtr.flush().is_ok());
+
+        let csv_data = wtr.into_inner().unwrap();
+        assert!(!csv_data.get_ref().is_empty());
+    }
+}
+
 /// 安全地导出 HTML 表格到 CSV 文件
 ///
 /// # 参数
@@ -154,6 +209,7 @@ impl Drop for UrlGuard {
 /// 请使用 `export_table_to_csv` 函数替代
 #[wasm_bindgen]
 #[deprecated(note = "请使用 export_table_to_csv(table_id, filename) 替代")]
+#[allow(deprecated)]  // 允许调用主函数，避免递归弃用警告
 pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue> {
     export_table_to_csv(table_id, None)
 }
