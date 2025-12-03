@@ -1,0 +1,303 @@
+# 📚 wasm-excel-exporter 使用示例
+
+这个目录包含了 wasm-excel-exporter 的完整使用示例。每个示例都是一个独立的 HTML 文件，展示了库的不同功能。
+
+## 🚀 快速开始
+
+### 前置要求
+
+1. 构建 WASM 包：
+```bash
+wasm-pack build --target web
+```
+
+2. 启动本地服务器：
+```bash
+# 推荐：使用 basic-http-server（Rust 实现，快速简单）
+# 如果尚未安装，使用以下命令安装：
+cargo install basic-http-server
+
+# 启动服务器（默认端口 4000）
+basic-http-server .
+
+# 或指定端口
+basic-http-server . -a 127.0.0.1:8000
+
+# 其他备选方案：
+# 使用 Python
+python -m http.server 8000
+
+# 使用 Node.js http-server
+npx http-server .
+```
+
+3. 在浏览器中打开示例文件
+
+## 📋 示例清单
+
+### 1. basic-export.html - 基本导出示例
+**功能**：
+- ✅ 使用默认文件名导出
+- ✅ 使用自定义文件名导出
+- ✅ 使用带日期的文件名导出
+
+**适用场景**：
+- 快速上手
+- 简单的表格导出需求
+- 学习基本 API 用法
+
+**关键代码**：
+```javascript
+import init, { export_table_to_csv } from '../pkg/wasm_excel_exporter.js';
+
+await init();
+export_table_to_csv('table-id', '文件名.csv');
+```
+
+---
+
+### 2. progress-export.html - 进度条导出示例
+**功能**：
+- ✅ 大数据集导出
+- ✅ 实时进度显示
+- ✅ 导出性能统计
+- ✅ 操作日志记录
+
+**适用场景**：
+- 导出大型表格（100+ 行）
+- 需要用户反馈的场景
+- 性能监控和优化
+
+**关键代码**：
+```javascript
+import init, { export_table_to_csv_with_progress } from '../pkg/wasm_excel_exporter.js';
+
+await init();
+export_table_to_csv_with_progress(
+    'table-id',
+    '文件名.csv',
+    (progress) => {
+        console.log(`进度: ${progress}%`);
+        updateProgressBar(progress);
+    }
+);
+```
+
+---
+
+### 3. advanced-features.html - 高级特性示例
+**功能**：
+- ✅ 自定义文件名
+- ✅ 文件名安全验证演示
+- ✅ 批量导出多个表格
+- ✅ 错误处理演示
+
+**适用场景**：
+- 复杂的导出需求
+- 需要批量处理
+- 学习错误处理最佳实践
+
+**关键代码**：
+```javascript
+// 批量导出
+const tables = ['table-1', 'table-2', 'table-3'];
+for (const tableId of tables) {
+    export_table_to_csv(tableId, `${tableId}.csv`);
+    await new Promise(resolve => setTimeout(resolve, 100));
+}
+```
+
+## 🎯 使用指南
+
+### 基本使用流程
+
+1. **初始化 WASM 模块**
+```javascript
+import init from '../pkg/wasm_excel_exporter.js';
+await init();
+```
+
+2. **导出表格**
+```javascript
+import { export_table_to_csv } from '../pkg/wasm_excel_exporter.js';
+export_table_to_csv('your-table-id', '文件名');
+```
+
+3. **错误处理**
+```javascript
+try {
+    export_table_to_csv('table-id', '文件名');
+} catch (error) {
+    console.error('导出失败:', error);
+}
+```
+
+### 进阶使用
+
+#### 带进度回调
+```javascript
+import { export_table_to_csv_with_progress } from '../pkg/wasm_excel_exporter.js';
+
+export_table_to_csv_with_progress(
+    'large-table',
+    'data.csv',
+    (progress) => {
+        // 更新 UI
+        document.getElementById('progress').textContent = `${Math.round(progress)}%`;
+    }
+);
+```
+
+#### 动态文件名
+```javascript
+const today = new Date().toISOString().split('T')[0];
+const filename = `数据_${today}.csv`;
+export_table_to_csv('table-id', filename);
+```
+
+#### 批量导出
+```javascript
+async function exportAll() {
+    const tables = [
+        { id: 'sales', name: '销售数据' },
+        { id: 'products', name: '产品信息' },
+        { id: 'customers', name: '客户列表' }
+    ];
+
+    for (const table of tables) {
+        export_table_to_csv(table.id, table.name);
+        await new Promise(r => setTimeout(r, 200)); // 避免浏览器限制
+    }
+}
+```
+
+## 🛡️ 文件名验证规则
+
+库会自动验证文件名的安全性：
+
+### ✅ 允许的字符
+- 字母数字：`A-Z a-z 0-9`
+- 下划线和连字符：`_ -`
+- 点号：`.`（不在开头和结尾）
+- 空格（不在开头和结尾）
+- Unicode 字符（中文、日文、韩文等）
+
+### ❌ 禁止的字符
+- 路径分隔符：`/ \`
+- 危险字符：`< > : " | ? *`
+- Windows 保留名称：`CON PRN AUX NUL COM1-9 LPT1-9`
+
+### 📏 长度限制
+- 最小：1 字符
+- 最大：255 字符
+
+## 🔧 故障排除
+
+### 问题：WASM 模块加载失败
+**解决方案**：
+1. 确保使用 HTTP 服务器（不是 file://）
+2. 检查 pkg/ 目录是否存在
+3. 确认路径正确（例如：`../pkg/wasm_excel_exporter.js`）
+
+### 问题：找不到表格元素
+**解决方案**：
+1. 检查表格 ID 是否正确
+2. 确保 DOM 已加载完成
+3. 使用浏览器开发工具检查元素
+
+### 问题：文件名验证失败
+**解决方案**：
+1. 检查文件名是否包含非法字符
+2. 确认文件名长度不超过 255 字符
+3. 避免使用 Windows 保留名称
+
+### 问题：下载被浏览器阻止
+**解决方案**：
+1. 检查浏览器的下载设置
+2. 允许该网站的弹出窗口和下载
+3. 批量下载时添加延迟
+
+## 📖 API 参考
+
+### export_table_to_csv(table_id, filename?)
+导出 HTML 表格为 CSV 文件。
+
+**参数**：
+- `table_id` (string): 表格元素的 ID
+- `filename` (string, 可选): 导出文件名，默认 "table_export.csv"
+
+**返回**：无（成功）或抛出异常（失败）
+
+---
+
+### export_table_to_csv_with_progress(table_id, filename?, callback?)
+带进度回调的表格导出。
+
+**参数**：
+- `table_id` (string): 表格元素的 ID
+- `filename` (string, 可选): 导出文件名
+- `callback` (function, 可选): 进度回调函数，接收 0-100 的进度值
+
+**返回**：无（成功）或抛出异常（失败）
+
+## 🌐 浏览器兼容性
+
+| 浏览器 | 最低版本 | 说明 |
+|--------|---------|------|
+| Chrome | 90+ | ✅ 完全支持 |
+| Firefox | 88+ | ✅ 完全支持 |
+| Safari | 14+ | ✅ 完全支持 |
+| Edge | 90+ | ✅ 完全支持 |
+
+## 💡 最佳实践
+
+1. **始终进行错误处理**
+```javascript
+try {
+    export_table_to_csv('table-id', 'filename');
+} catch (error) {
+    // 向用户显示友好的错误信息
+    alert('导出失败，请重试');
+}
+```
+
+2. **大表格使用进度回调**
+```javascript
+// 对于 > 100 行的表格，使用进度版本
+if (rowCount > 100) {
+    export_table_to_csv_with_progress(id, name, updateProgress);
+} else {
+    export_table_to_csv(id, name);
+}
+```
+
+3. **批量导出添加延迟**
+```javascript
+// 避免浏览器下载限制
+for (const table of tables) {
+    export_table_to_csv(table.id, table.name);
+    await new Promise(r => setTimeout(r, 200));
+}
+```
+
+4. **使用有意义的文件名**
+```javascript
+const date = new Date().toISOString().split('T')[0];
+const filename = `${reportType}_${date}.csv`;
+```
+
+## 🤝 贡献
+
+发现示例中的问题或有改进建议？欢迎提交 Issue 或 Pull Request！
+
+## 📄 许可证
+
+与主项目相同：MIT OR Apache-2.0
+
+---
+
+**需要帮助？**
+- 查看主项目 [README](../README.md)
+- 提交 [Issue](https://github.com/kurisuu/wasm-excel-exporter/issues)
+- 阅读 [API 文档](../EXAMPLES.md)
+

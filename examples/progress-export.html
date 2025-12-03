@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>进度条示例 - wasm-excel-exporter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 400px;
+            overflow-y: auto;
+            display: block;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tbody {
+            display: block;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        tr {
+            display: table;
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            padding: 5px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-container.show {
+            display: block;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 40px;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: width 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-text {
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(240, 147, 251, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .info-box h3 {
+            color: #2196F3;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+
+        .info-box p {
+            color: #555;
+            line-height: 1.6;
+            font-size: 14px;
+        }
+
+        .log {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: #666;
+            margin-right: 10px;
+        }
+
+        .log-message {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 进度条导出示例</h1>
+        <p class="subtitle">演示大数据集导出时的进度反馈功能</p>
+
+        <div class="info-box">
+            <h3>🎯 功能说明</h3>
+            <p>
+                这个示例展示了 <code>export_table_to_csv_with_progress()</code> 函数的使用。
+                当导出大型表格时，进度回调函数会实时更新进度条，让用户了解导出进度。
+            </p>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="row-count">100</div>
+                <div class="stat-label">表格行数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="column-count">6</div>
+                <div class="stat-label">表格列数</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="export-time">-</div>
+                <div class="stat-label">导出耗时</div>
+            </div>
+        </div>
+
+        <div style="max-height: 400px; overflow-y: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <table id="large-data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>产品名称</th>
+                        <th>类别</th>
+                        <th>价格</th>
+                        <th>库存</th>
+                        <th>销量</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- 将由 JavaScript 动态生成 -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="progress-container" id="progress-container">
+            <div class="progress-bar" id="progress-bar">
+                <span class="progress-text" id="progress-text">0%</span>
+            </div>
+        </div>
+
+        <button id="export-btn" onclick="exportWithProgress()">
+            🚀 开始导出（带进度显示）
+        </button>
+
+        <div class="log" id="log">
+            <div class="log-entry">
+                <span class="log-time">系统</span>
+                <span class="log-message">等待用户操作...</span>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import init, { export_table_to_csv_with_progress } from '../pkg/wasm_excel_exporter.js';
+
+        // 生成大量测试数据
+        function generateTableData(rowCount = 100) {
+            const tbody = document.getElementById('table-body');
+            const categories = ['电子产品', '家居用品', '图书', '服装', '食品', '运动器材'];
+            const products = [
+                '智能手机', '笔记本电脑', '平板电脑', '耳机', '充电器',
+                '沙发', '床', '桌子', '椅子', '台灯',
+                '小说', '技术书籍', '漫画', '杂志', '词典',
+                'T恤', '裤子', '外套', '鞋子', '帽子',
+                '零食', '饮料', '水果', '蔬菜', '肉类',
+                '跑步机', '哑铃', '瑜伽垫', '运动鞋', '运动服'
+            ];
+
+            tbody.innerHTML = '';
+
+            for (let i = 1; i <= rowCount; i++) {
+                const row = document.createElement('tr');
+                const category = categories[Math.floor(Math.random() * categories.length)];
+                const product = products[Math.floor(Math.random() * products.length)];
+                const price = (Math.random() * 1000 + 50).toFixed(2);
+                const stock = Math.floor(Math.random() * 1000);
+                const sales = Math.floor(Math.random() * 500);
+
+                row.innerHTML = `
+                    <td>P${i.toString().padStart(4, '0')}</td>
+                    <td>${product}</td>
+                    <td>${category}</td>
+                    <td>¥${price}</td>
+                    <td>${stock}</td>
+                    <td>${sales}</td>
+                `;
+                tbody.appendChild(row);
+            }
+
+            document.getElementById('row-count').textContent = rowCount;
+        }
+
+        // 添加日志
+        function addLog(message, type = 'info') {
+            const log = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+
+            const time = new Date().toLocaleTimeString('zh-CN');
+            entry.innerHTML = `
+                <span class="log-time">${time}</span>
+                <span class="log-message">${message}</span>
+            `;
+
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // 初始化 WASM 模块
+        let wasmInitialized = false;
+
+        async function initWasm() {
+            if (!wasmInitialized) {
+                try {
+                    await init();
+                    wasmInitialized = true;
+                    addLog('✅ WASM 模块初始化成功');
+                    console.log('✅ WASM 模块初始化成功');
+                } catch (error) {
+                    addLog('❌ WASM 模块初始化失败: ' + error);
+                    throw error;
+                }
+            }
+        }
+
+        // 导出函数 - 带进度显示
+        window.exportWithProgress = async function() {
+            try {
+                await initWasm();
+
+                const btn = document.getElementById('export-btn');
+                const progressContainer = document.getElementById('progress-container');
+                const progressBar = document.getElementById('progress-bar');
+                const progressText = document.getElementById('progress-text');
+                const exportTimeElement = document.getElementById('export-time');
+
+                // 禁用按钮
+                btn.disabled = true;
+                btn.textContent = '⏳ 正在导出...';
+
+                // 显示进度条
+                progressContainer.classList.add('show');
+                progressBar.style.width = '0%';
+                progressText.textContent = '0%';
+
+                addLog('🚀 开始导出数据...');
+
+                const startTime = performance.now();
+
+                // 进度回调函数
+                let lastProgress = 0;
+                const progressCallback = (progress) => {
+                    const roundedProgress = Math.round(progress);
+                    progressBar.style.width = `${progress}%`;
+                    progressText.textContent = `${roundedProgress}%`;
+
+                    // 每 20% 记录一次日志
+                    if (roundedProgress % 20 === 0 && roundedProgress !== lastProgress) {
+                        addLog(`📊 导出进度: ${roundedProgress}%`);
+                        lastProgress = roundedProgress;
+                    }
+                };
+
+                // 执行导出
+                const today = new Date().toISOString().split('T')[0];
+                const filename = `产品数据_${today}.csv`;
+
+                export_table_to_csv_with_progress(
+                    'large-data-table',
+                    filename,
+                    progressCallback
+                );
+
+                const endTime = performance.now();
+                const duration = ((endTime - startTime) / 1000).toFixed(2);
+
+                exportTimeElement.textContent = `${duration}s`;
+
+                addLog(`✅ 导出成功！文件名: ${filename}`);
+                addLog(`⏱️ 耗时: ${duration} 秒`);
+
+                // 延迟隐藏进度条
+                setTimeout(() => {
+                    progressContainer.classList.remove('show');
+                    btn.disabled = false;
+                    btn.textContent = '🚀 开始导出（带进度显示）';
+                }, 2000);
+
+            } catch (error) {
+                addLog('❌ 导出失败: ' + error);
+                console.error('❌ 导出失败:', error);
+
+                const btn = document.getElementById('export-btn');
+                const progressContainer = document.getElementById('progress-container');
+
+                btn.disabled = false;
+                btn.textContent = '🚀 开始导出（带进度显示）';
+                progressContainer.classList.remove('show');
+            }
+        };
+
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            generateTableData(100);
+            initWasm().catch(error => {
+                console.error('初始化失败:', error);
+                addLog('❌ 初始化失败: ' + error);
+            });
+        });
+    </script>
+</body>
+</html>
+

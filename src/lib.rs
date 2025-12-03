@@ -13,91 +13,6 @@ use web_sys::{
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_filename_extension_handling() {
-        // 测试文件名扩展名处理逻辑
-        // 由于这部分是纯 Rust 逻辑，我们可以独立测试
-
-        let test_cases = vec![
-            ("test.csv", "test.csv"),
-            ("report", "report.csv"),
-            ("data.CSV", "data.CSV"), // 保持原有大小写
-            ("export.csv", "export.csv"),
-            ("", "table_export.csv"), // 默认文件名
-        ];
-
-        for (input, expected) in test_cases {
-            let result = if input.is_empty() {
-                "table_export.csv".to_string()
-            } else if input.to_lowercase().ends_with(".csv") {
-                input.to_string()
-            } else {
-                format!("{}.csv", input)
-            };
-
-            assert_eq!(result, expected);
-        }
-    }
-
-    #[test]
-    fn test_validation_logic() {
-        // 测试输入验证逻辑
-        let valid_id = "my-table";
-        let empty_id = "";
-
-        // 这些验证在函数中，我们测试逻辑
-        assert!(!valid_id.is_empty());
-        assert!(empty_id.is_empty());
-    }
-
-    #[test]
-    fn test_csv_writer_creation() {
-        // 测试 CSV writer 可以正常创建和使用
-        let mut wtr = Writer::from_writer(Cursor::new(Vec::new()));
-
-        let test_data = vec!["Header1", "Header2", "Header3"];
-        assert!(wtr.write_record(&test_data).is_ok());
-        assert!(wtr.flush().is_ok());
-
-        let csv_data = wtr.into_inner().unwrap();
-        assert!(!csv_data.get_ref().is_empty());
-    }
-
-    #[test]
-    fn test_filename_validation() {
-        // 测试有效的文件名
-        assert!(super::validate_filename("valid_filename.csv").is_ok());
-        assert!(super::validate_filename("report-2024").is_ok());
-        assert!(super::validate_filename("数据导出_test").is_ok());
-
-        // 测试无效的文件名
-        assert!(super::validate_filename("").is_err()); // 空文件名
-        assert!(super::validate_filename("path/to/file").is_err()); // 包含路径分隔符
-        assert!(super::validate_filename("path\\to\\file").is_err()); // 包含路径分隔符
-        assert!(super::validate_filename("invalid<name").is_err()); // 包含非法字符
-        assert!(super::validate_filename("invalid>name").is_err()); // 包含非法字符
-        assert!(super::validate_filename("invalid:name").is_err()); // 包含非法字符
-        assert!(super::validate_filename("invalid\"name").is_err()); // 包含非法字符
-        assert!(super::validate_filename("invalid|name").is_err()); // 包含非法字符
-        assert!(super::validate_filename("invalid?name").is_err()); // 包含非法字符
-        assert!(super::validate_filename("invalid*name").is_err()); // 包含非法字符
-        assert!(super::validate_filename("CON").is_err()); // Windows 保留名称
-        assert!(super::validate_filename("PRN.csv").is_err()); // Windows 保留名称
-        assert!(super::validate_filename("AUX").is_err()); // Windows 保留名称
-        assert!(super::validate_filename(".hidden").is_err()); // 以点开头
-        assert!(super::validate_filename("trailing.").is_err()); // 以点结尾
-        assert!(super::validate_filename(" space").is_err()); // 以空格开头
-        assert!(super::validate_filename("space ").is_err()); // 以空格结尾
-
-        // 测试过长的文件名
-        let long_name = "a".repeat(256);
-        assert!(super::validate_filename(&long_name).is_err());
-    }
-}
 
 /// 验证文件名是否安全合法
 ///
@@ -107,7 +22,11 @@ mod tests {
 /// # 返回值
 /// * `Ok(())` - 文件名合法
 /// * `Err(String)` - 文件名不合法，包含错误信息
-fn validate_filename(filename: &str) -> Result<(), String> {
+///
+/// # 注意
+/// 这个函数主要供内部使用，但也导出以便测试
+#[doc(hidden)]
+pub fn validate_filename(filename: &str) -> Result<(), String> {
     // 检查文件名是否为空
     if filename.is_empty() {
         return Err("文件名不能为空".to_string());

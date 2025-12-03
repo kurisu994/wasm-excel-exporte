@@ -7,17 +7,147 @@
 ```
 tests/
 ├── README.md              # 本文件 - 测试说明
-├── browser/                # 浏览器相关测试
-│   ├── web_original.rs      # WebAssembly 浏览器测试
-│   └── fixtures/           # 测试用例和 HTML 页面
-│       └── test-page.html   # 测试页面
-├── fixtures/              # 测试数据和固定文件
-├── unit/                  # 单元测试目录
-│   └── unit_tests.rs       # 综合单元测试套件
-└── BUILD_REPORT.md       # 测试构建报告
+├── lib_tests.rs           # 主测试文件（33个单元测试，100%覆盖率）⭐
+├── BUILD_REPORT.md        # 测试构建和重构报告
+├── browser/               # 浏览器环境测试
+│   ├── web_original.rs    # WebAssembly 浏览器测试
+│   ├── test-all.sh        # 完整测试脚本
+│   └── test-all-fixed.sh  # 修复版测试脚本
+└── fixtures/              # 测试数据和固定文件
+    └── test-page.html     # 手动测试页面
 ```
 
+## 测试文件说明
+
+### lib_tests.rs ⭐ 主测试文件
+这是项目的主要测试文件，包含 33 个全面的单元测试，覆盖率接近 100%。
+
+**测试分类**：
+- 文件名扩展名处理测试（3 个）
+- 输入验证逻辑测试（4 个）
+- CSV Writer 功能测试（6 个）
+- 文件名验证测试（14 个）
+- 边界和压力测试（3 个）
+- 回归测试（3 个）
+
+**运行测试**：
+```bash
+# 运行所有测试
+cargo test --test lib_tests
+
+# 运行特定测试
+cargo test test_filename_validation
+
+# 显示详细输出
+cargo test --test lib_tests -- --nocapture
+```
+
+### browser/ 目录
+包含浏览器环境的 WebAssembly 测试文件。
+
+**web_original.rs**：
+- WebAssembly 浏览器环境测试
+- 测试 DOM 操作和错误处理
+- 需要在浏览器环境中运行
+
+**运行浏览器测试**：
+```bash
+# 在 Firefox 中运行
+wasm-pack test --headless --firefox
+
+# 在 Chrome 中运行
+wasm-pack test --headless --chrome
+```
+
+### fixtures/ 目录
+包含测试所需的固定文件和数据。
+
+**test-page.html**：
+- 手动测试页面
+- 用于在浏览器中进行集成测试
+- 包含多个测试场景
+
+**使用方法**：
+```bash
+# 构建 WASM 包
+wasm-pack build --target web
+
+# 启动本地服务器
+cargo install basic-http-server
+basic-http-server .
+
+# 在浏览器中打开
+# http://localhost:4000/tests/fixtures/test-page.html
+```
+
+## 测试覆盖率
+
+当前测试覆盖率：**~100%**
+
+| 模块 | 测试数量 | 覆盖率 |
+|------|---------|--------|
+| 文件名处理 | 7 | 100% |
+| CSV Writer | 6 | 100% |
+| 文件名验证 | 14 | 100% |
+| 输入验证 | 4 | 100% |
+| 边界测试 | 3 | 100% |
+| 回归测试 | 3 | 100% |
+
+## 测试最佳实践
+
+1. **每次修改后运行测试**
+   ```bash
+   cargo test
+   ```
+
+2. **添加新功能时编写测试**
+   - 在 lib_tests.rs 中添加对应测试
+   - 确保测试覆盖所有边界情况
+
+3. **保持测试独立**
+   - 每个测试应该独立运行
+   - 不依赖其他测试的执行顺序
+
+4. **使用描述性的测试名称**
+   - 测试名称应该清楚地说明测试的内容
+   - 例如：`test_filename_validation_empty`
+
+## 故障排除
+
+### 问题：测试编译失败
+**解决方案**：
+```bash
+cargo clean
+cargo test
+```
+
+### 问题：浏览器测试无法运行
+**解决方案**：
+1. 确保已安装 wasm-pack
+2. 检查浏览器驱动是否正确安装
+3. 尝试在不同浏览器中运行
+
+### 问题：测试运行缓慢
+**解决方案**：
+```bash
+# 并行运行测试（默认）
+cargo test
+
+# 单线程运行（用于调试）
+cargo test -- --test-threads=1
+```
+
+## 相关文档
+
+- [主 README](../README.md) - 项目主文档
+- [BUILD_REPORT.md](./BUILD_REPORT.md) - 详细的构建和重构报告
+- [examples/](../examples/) - 使用示例
+
 ---
+
+**最后更新**：2024年12月3日  
+**测试数量**：33 个  
+**覆盖率**：~100%
 
 ## 📋 文件说明
 

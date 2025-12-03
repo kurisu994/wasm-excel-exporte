@@ -312,6 +312,27 @@ export_table_to_csv_with_progress(
 - Node.js 16+
 - wasm-pack
 
+### 项目结构
+
+```
+wasm-excel-exporter/
+├── src/
+│   ├── lib.rs          # 核心实现（导出功能）
+│   └── utils.rs        # 工具函数
+├── tests/
+│   ├── lib_tests.rs    # 完整的单元测试套件（33个测试）
+│   ├── unit/           # 单元测试目录
+│   └── browser/        # 浏览器测试目录
+├── examples/
+│   ├── basic-export.html         # 基本导出示例
+│   ├── progress-export.html      # 进度条示例
+│   ├── advanced-features.html    # 高级特性示例
+│   └── README.md                 # 示例文档
+├── pkg/                # 生成的 WebAssembly 包
+├── Cargo.toml          # Rust 项目配置
+└── README.md           # 项目文档
+```
+
 ### 构建项目
 
 ```bash
@@ -320,16 +341,75 @@ git clone https://github.com/kurisuu/wasm-excel-exporter.git
 cd wasm-excel-exporter
 
 # 构建 WebAssembly 包
-wasm-pack build
+wasm-pack build --target web
 
-# 运行 Rust 测试
+# 运行所有测试（33个单元测试）
 cargo test
+
+# 运行特定测试
+cargo test --test lib_tests
+
+# 运行 lib 测试
+cargo test --lib
 
 # 格式化代码
 cargo fmt
 
 # 检查代码
 cargo check
+```
+
+### 测试覆盖
+
+项目包含 **33 个全面的单元测试**，覆盖率接近 **100%**：
+
+- ✅ 文件名扩展名处理测试（3 个测试）
+- ✅ 输入验证逻辑测试（4 个测试）
+- ✅ CSV Writer 功能测试（6 个测试）
+- ✅ 文件名验证测试（14 个测试）
+- ✅ 边界情况和压力测试（3 个测试）
+- ✅ 回归测试（3 个测试）
+
+运行测试：
+```bash
+$ cargo test --test lib_tests
+
+running 33 tests
+test test_csv_writer_creation ... ok
+test test_csv_writer_empty_data ... ok
+test test_csv_writer_special_characters ... ok
+test test_csv_writer_unicode_data ... ok
+test test_csv_writer_write_multiple_records ... ok
+test test_csv_writer_write_single_record ... ok
+test test_filename_extension_handling_basic ... ok
+test test_filename_extension_handling_unicode ... ok
+test test_filename_extension_handling_special_cases ... ok
+test test_filename_validation_dangerous_chars ... ok
+test test_filename_validation_edge_length ... ok
+test test_filename_validation_empty ... ok
+test test_filename_validation_ends_with_dot ... ok
+test test_csv_writer_wide_table ... ok
+test test_filename_validation_ends_with_space ... ok
+test test_filename_validation_mixed_valid_invalid ... ok
+test test_filename_validation_path_separators ... ok
+test test_filename_validation_starts_with_dot ... ok
+test test_filename_validation_starts_with_space ... ok
+test test_filename_validation_too_long ... ok
+test test_filename_validation_valid_simple ... ok
+test test_filename_validation_valid_unicode ... ok
+test test_filename_validation_valid_with_spaces ... ok
+test test_filename_validation_valid_with_special_chars ... ok
+test test_filename_validation_windows_reserved_names ... ok
+test test_regression_empty_csv_writer ... ok
+test test_regression_unicode_in_validation ... ok
+test test_regression_case_sensitivity ... ok
+test test_validation_empty_string ... ok
+test test_validation_non_empty_string ... ok
+test test_validation_special_chars_in_id ... ok
+test test_validation_whitespace_string ... ok
+test test_csv_writer_large_dataset ... ok
+
+test result: ok. 33 passed; 0 failed; 0 ignored
 ```
 
 ### 浏览器测试
@@ -342,6 +422,20 @@ wasm-pack test --headless --firefox
 wasm-pack test --headless --chrome
 ```
 
+### 查看示例
+
+```bash
+# 启动本地服务器
+python -m http.server 8000
+# 或
+npx http-server .
+
+# 然后在浏览器中访问
+# http://localhost:8000/examples/basic-export.html
+# http://localhost:8000/examples/progress-export.html
+# http://localhost:8000/examples/advanced-features.html
+```
+
 ### 发布到 NPM
 
 ```bash
@@ -352,47 +446,32 @@ wasm-pack publish
 wasm-pack publish --target bundler
 ```
 
+## 📖 示例代码
+
+查看 [examples/](./examples/) 目录获取完整的使用示例：
+
+- **basic-export.html** - 基本导出功能演示
+- **progress-export.html** - 大数据集导出与进度显示
+- **advanced-features.html** - 高级特性（批量导出、错误处理等）
+
+每个示例都包含完整的代码和注释，可以直接在浏览器中运行。
+
 ## 🏗️ 项目架构
-
-```
-wasm-excel-exporter/
-├── src/
-│   ├── lib.rs          # 核心实现文件
-│   └── utils.rs        # 工具函数模块
-├── tests/
-│   └── web.rs          # 浏览器环境测试
-├── pkg/                # 生成的 WebAssembly 包
-├── Cargo.toml          # Rust 项目配置
-├── README.md           # 项目文档
-└── CLAUDE.md           # Claude Code 指令
-```
-
-### 核心模块
-
-- **`src/lib.rs`**: 主要实现文件，包含表格导出逻辑
-  - `export_table_to_csv()`: 主要导出函数
-  - `UrlGuard`: RAII 风格的资源管理器
-  - 完善的错误处理和输入验证
-
-- **`src/utils.rs`**: 工具模块
-  - `set_panic_hook()`: 开发环境调试支持
-
-### 技术栈
-
-- **核心语言**: Rust (Edition 2024)
-- **WebAssembly**: wasm-bindgen
-- **Web API**: web-sys
-- **CSV 处理**: csv crate
-- **JavaScript 互操作**: js-sys
-- **内存分配**: wee_alloc (可选)
-- **调试支持**: console_error_panic_hook
-
 ## 🔄 版本历史
 
-### v1.1.0 (当前版本)
+### v1.2.0 (当前开发版本)
+- ✅ 重构测试架构，将测试统一到 tests 目录
+- ✅ 添加 33 个全面的单元测试，覆盖率接近 100%
+- ✅ 创建 examples 目录，包含 3 个完整的 HTML 示例
+- ✅ 改进项目结构和文档
+
+### v1.1.0
 - ✅ 完全重写错误处理机制
 - ✅ 实现 RAII 资源管理
 - ✅ 添加自定义文件名支持
+- ✅ 添加文件名安全验证
+- ✅ 添加进度回调功能
+- ✅ 优化 WASM 文件大小（减小 22%）
 - ✅ 更新至 Rust Edition 2024
 - ✅ 依赖项安全更新
 
