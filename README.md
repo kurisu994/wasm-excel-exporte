@@ -17,7 +17,18 @@
   <sub>Built with 🦀🕸 by <a href="https://rustwasm.github.io/">The Rust and WebAssembly Working Group</a></sub>
 </div>
 
-This project is a Rust library that compiles to WebAssembly, allowing you to export data from Ant Design table components to Excel files. The library utilizes the `wasm-bindgen` crate to facilitate communication between Rust and JavaScript.
+这是一个 Rust WebAssembly 库，用于安全高效地将 HTML 表格数据导出为 CSV 文件。该库使用 `wasm-bindgen` 实现 Rust 与 JavaScript 之间的通信，专门为现代 Web 应用程序设计。
+
+## 🔧 主要改进（v1.1.0）
+
+- ✅ **完全重写的错误处理**：消除所有潜在的 panic 点
+- ✅ **内存安全**：使用 RAII 模式确保资源正确释放
+- ✅ **输入验证**：全面的参数验证和边界检查
+- ✅ **函数重命名**：更准确的命名（CSV 而非 Excel）
+- ✅ **自定义文件名**：支持用户指定导出文件名
+- ✅ **向后兼容**：保留旧 API 以确保兼容性
+- ✅ **Rust Edition 2024**：使用最新的语言特性
+- ✅ **更新依赖**：最新的安全版本和性能优化
 
 ## Project Structure
 
