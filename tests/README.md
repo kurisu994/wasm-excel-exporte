@@ -1,22 +1,50 @@
-# 🧪 测试套件文档
+# 测试目录结构
 
-本目录包含了 `wasm-excel-exporter` 项目的完整测试套件，涵盖单元测试、集成测试、功能验证和构建质量检查。
+本目录包含了 wasm-excel-exporter 项目的所有测试文件。
+
+## 目录结构
+
+```
+tests/
+├── README.md              # 本文件 - 测试说明
+├── browser/                # 浏览器相关测试
+│   ├── web_original.rs      # WebAssembly 浏览器测试
+│   └── fixtures/           # 测试用例和 HTML 页面
+│       └── test-page.html   # 测试页面
+├── fixtures/              # 测试数据和固定文件
+├── unit/                  # 单元测试目录
+│   └── unit_tests.rs       # 综合单元测试套件
+└── BUILD_REPORT.md       # 测试构建报告
+```
 
 ---
 
 ## 📋 文件说明
 
-### 🔬 Rust 单元测试
+## 测试类型
 
-#### `web.rs`
-- **类型**: WebAssembly 单元测试
-- **运行环境**: 浏览器 (wasm32-unknown-unknown)
-- **测试框架**: `wasm-bindgen-test`
-- **覆盖内容**:
-  - 基础功能验证
-  - 错误处理机制测试
+### 1. 单元测试 (`unit/`)
+- **文件**: `unit_tests.rs`
+- **运行方式**: `cargo test --lib`
+- **覆盖范围**:
   - 文件名处理逻辑
-  - 向后兼容性验证
+  - CSV 写入操作
+  - 字符串边界情况
+  - 错误处理和 JsValue 转换
+  - 内存效率测试
+
+### 2. WebAssembly 浏览器测试 (`browser/`)
+- **文件**: `web_original.rs`
+- **运行方式**: `wasm-pack test --headless --firefox/chrome`
+- **覆盖范围**:
+  - WebAssembly 环境中的函数导出
+  - DOM 操作测试
+  - 错误处理机制验证
+  - 浏览器兼容性测试
+
+### 3. 测试固定文件 (`fixtures/`)
+- **内容**: HTML 测试页面和测试数据
+- **用途**: 为浏览器测试提供标准化的测试环境
 
 **运行方式**:
 ```bash

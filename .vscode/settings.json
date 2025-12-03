@@ -1,0 +1,27 @@
+{
+  "rust-analyzer.cargo.loadOutDirsFromCheck": true,
+  "rust-analyzer.checkOnSave.command": "clippy",
+  "rust-analyzer.cargo.features": "all",
+  "rust-analyzer.imports.granularity.enforce": true,
+  "rust-analyzer.inlayHints.typeHints.enable": true,
+  "rust-analyzer.inlayHints.parameterHints.enable": true,
+  "rust-analyzer.inlayHints.chainingHints.enable": true,
+  "files.associations": {
+    "*.rs": "rust",
+    "Cargo.toml": "toml",
+    "*.md": "markdown"
+  },
+  "files.exclude": {
+    "**/target": true,
+    "**/pkg": true,
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true
+  },
+  "rust-analyzer.rustfmt.overrideCommand": "rustfmt"
+}
