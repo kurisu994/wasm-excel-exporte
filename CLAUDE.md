@@ -4,85 +4,134 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个使用 Rust 编写的 WebAssembly 库，用于将 HTML 表格数据导出为 Excel (CSV) 文件。该库通过 `wasm-bindgen` 与 JavaScript 进行交互，可以从网页中提取表格内容并生成下载链接。
+这是一个企业级的 Rust WebAssembly 库，用于安全高效地将 HTML 表格数据导出为 CSV 文件。项目采用 v1.1.0 版本，使用 Rust Edition 2024，具有完善的错误处理和 RAII 资源管理。
 
 ## 常用命令
 
-### 构建和开发
+### WebAssembly 构建和测试
 ```bash
-# 构建 WebAssembly 包
+# 构建 WebAssembly 包（默认目标为 browser）
 wasm-pack build
 
-# 在浏览器中进行测试
+# 构建特定目标
+wasm-pack build --target bundler  # webpack/rollup
+wasm-pack build --target nodejs    # Node.js
+wasm-pack build --target web       # 原生 Web
+
+# 浏览器测试
 wasm-pack test --headless --firefox
-# 或使用 Chrome
 wasm-pack test --headless --chrome
 
 # 发布到 NPM
 wasm-pack publish
+
+# 构建并发布到自定义 registry
+wasm-pack build --target bundler && wasm-pack publish --target bundler
 ```
 
-### Rust 开发
+### Rust 开发工作流
 ```bash
-# 运行 Rust 测试（在本地环境中）
+# 运行所有测试（包括单元测试和 WebAssembly 测试）
 cargo test
 
-# 检查代码
+# 只运行本地测试（不包括 WebAssembly）
+cargo test --lib
+
+# 检查代码（不编译）
 cargo check
 
 # 格式化代码
 cargo fmt
+
+# 代码检查
+cargo clippy -- -D warnings
+
+# 构建优化版本
+cargo build --release
+
+# 检查 WebAssembly 代码大小
+wasm-pack build --target web --release
 ```
 
 ## 项目架构
 
-### 核心模块
-- **src/lib.rs**: 主要实现文件，包含 `export_table_to_excel` 函数，这是库的核心功能
-  - 接受 HTML 表格的 ID 作为参数
-  - 遍历表格的行和列，提取文本内容
-  - 使用 CSV 格式写入数据
-  - 创建 Blob 对象并触发浏览器下载
+### 核心文件结构和职责
+- **src/lib.rs**: 企业级主实现，包含完整的错误处理和 RAII 资源管理
+  - `export_table_to_csv(table_id, filename)`: 主导出函数（v1.1.0+）
+  - `export_table_to_excel(table_id)`: 向后兼容的已弃用函数
+  - `UrlGuard`: RAII 资源管理器，确保 URL 对象正确释放
+  - 完整的输入验证、类型检查和错误处理机制
 
-- **src/utils.rs**: 工具模块，提供 panic hook 设置功能
-  - `set_panic_hook()`: 在开发环境中提供更好的错误信息
+- **src/utils.rs**: WebAssembly 调试工具模块
+  - `set_panic_hook()`: 开发环境下的 panic 信息显示
 
-### 依赖关系
-- **wasm-bindgen**: Rust 与 JavaScript 之间的桥梁
-- **web-sys**: 提供 Web API 的 Rust 绑定，包括 DOM 操作
-- **csv**: CSV 文件生成库
-- **js-sys**: JavaScript 系统类型的 Rust 绑定
+- **wasm-bindgen.toml**: WebAssembly 构建配置
+  - 配置为 `cdylib` 类型，优化体积
+  - Release 模式下优化级别设置为 "s"（大小优先）
 
-### 测试结构
-- **tests/web.rs**: 浏览器环境下的 WebAssembly 测试
-  - 使用 `wasm-bindgen-test` 框架
-  - 配置为在浏览器中运行测试
+- **Cargo.toml**: Rust 项目配置（Edition 2024）
+  - 双许可证：MIT OR Apache-2.0
+  - 依赖项定期更新，使用安全版本
 
-## 开发注意事项
+### WebAssembly 架构设计模式
+- **错误处理策略**: 使用 `Result<T, JsValue>` 与 JavaScript 互操作，所有潜在的 panic 点都被处理
+- **资源管理**: 实现 RAII 模式，`UrlGuard` 确保 Blob URL 的生命周期管理
+- **内存安全**: 通过 Rust 的所有权系统防止内存泄漏和数据竞争
+- **API 设计**: 新函数支持可选的文件名参数，旧函数标记为 `#[deprecated]`
 
-### WebAssembly 特定
-- 这是一个 `crate-type = ["cdylib", "rlib"]` 项目，支持编译为动态库和静态库
-- 使用 `#[wasm-bindgen]` 宏导出函数到 JavaScript
-- 错误处理使用 `Result<T, JsValue>` 类型以与 JavaScript 互操作
+### JavaScript 集成流程
+1. 通过 `web_sys::window()` 和 `document()` 安全获取全局对象
+2. 使用 `document.get_element_by_id()` 定位表格元素
+3. 动态类型检查：`dyn_into::<HtmlTableElement>()`
+4. 遍历 DOM 树：`table.rows()` → `row.cells()` → `cell.inner_text()`
+5. CSV 数据序列化：使用 `csv::Writer` 写入内存缓冲区
+6. 创建下载链接：`Blob::new()` → `Url::create_object_url()` → `anchor.click()`
+7. 自动资源清理：RAII 确保在函数结束时释放 URL 资源
 
-### 功能特性
-- **console_error_panic_hook**: 开发特性，提供更好的 panic 信息
-- **wee_alloc**: 可选的小型内存分配器（需要 nightly Rust）
+## 核心 API 使用
 
-### JavaScript 集成
-该库设计为在前端浏览器环境中使用，通过以下步骤工作：
-1. 通过 DOM API 查找指定 ID 的表格元素
-2. 遍历表格结构，提取单元格文本内容
-3. 将数据序列化为 CSV 格式
-4. 创建 Blob 对象并生成临时下载链接
-5. 触发浏览器下载并清理资源
-
-## 核心 API
-
+### 主导出函数（v1.1.0+）
 ```rust
 #[wasm_bindgen]
+pub fn export_table_to_csv(table_id: &str, filename: Option<String>) -> Result<(), JsValue>
+```
+- **参数**: `table_id` - HTML 表格元素 ID, `filename` - 可选的导出文件名
+- **功能**: 安全导出表格到 CSV，支持自定义文件名
+- **错误处理**: 全面的输入验证和异常处理
+
+### 向后兼容函数
+```rust
+#[wasm_bindgen]
+#[deprecated(note = "请使用 export_table_to_csv(table_id, filename) 替代")]
 pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue>
 ```
 
-- **参数**: `table_id` - 要导出的 HTML 表格元素的 ID
-- **返回**: `Result<(), JsValue>` - 成功时返回 Ok(())，失败时返回 JsValue 错误
-- **功能**: 将指定表格导出为 CSV 文件并自动触发浏览器下载
+## WebAssembly 特定注意事项
+
+- **目标平台**: 专为现代浏览器设计，支持 WebAssembly 的所有环境
+- **内存分配**: 默认使用系统分配器，可选 `wee_alloc` 小型分配器（需要 nightly）
+- **调试支持**: 开发特性 `console_error_panic_hook` 提供详细的 panic 信息
+- **构建优化**: Release 模式下优先考虑代码大小（`opt-level = "s"`）
+
+## 错误处理和调试
+
+### 开发环境调试
+```javascript
+// 在 JavaScript 中启用详细错误信息
+import { set_panic_hook } from 'wasm-excel-exporter';
+set_panic_hook();
+```
+
+### 常见错误类型
+- 表格元素不存在或不是有效的 `<table>` 元素
+- 表格为空（没有行数据）
+- DOM 操作失败（权限问题、页面卸载等）
+- Blob 创建失败或浏览器不支持下载
+- WebAssembly 初始化失败
+
+## 性能和安全特性
+
+- **零拷贝操作**: CSV 数据在内存中直接构建，避免不必要的数据复制
+- **内存安全**: Rust 编译时保证，防止缓冲区溢出、使用后释放等漏洞
+- **资源管理**: RAII 确保 Web 资源（如 Blob URL）的自动清理
+- **输入验证**: 对所有用户输入进行严格的类型和边界检查
