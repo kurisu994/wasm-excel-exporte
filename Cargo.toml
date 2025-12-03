@@ -2,7 +2,7 @@
 name = "wasm-excel-exporter"
 version = "1.0.0"
 authors = ["Kurisu <makise_kurisuu@outlook.jp>"]
-edition = "2018"
+edition = "2024"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

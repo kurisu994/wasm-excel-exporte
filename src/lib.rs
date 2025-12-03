@@ -1,10 +1,12 @@
 mod utils;
 
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
-use web_sys::{HtmlTableElement, HtmlTableRowElement, HtmlTableCellElement, Blob, Url, HtmlAnchorElement};
 use csv::Writer;
 use std::io::Cursor;
+use wasm_bindgen::prelude::*;
+use wasm_bindgen::JsCast;
+use web_sys::{
+    Blob, HtmlAnchorElement, HtmlTableCellElement, HtmlTableElement, HtmlTableRowElement, Url,
+};
 
 #[wasm_bindgen]
 pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue> {
@@ -43,11 +45,13 @@ pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue> {
 
     // 获取 CSV 数据
     let csv_data = wtr.into_inner().unwrap();
-    
+
     // 创建 Blob 对象
+    let blob_property_bag = web_sys::BlobPropertyBag::new();
+    blob_property_bag.set_type("text/csv;charset=utf-8");
     let blob = Blob::new_with_u8_array_sequence_and_options(
         &js_sys::Array::of1(&js_sys::Uint8Array::from(&csv_data.get_ref()[..])),
-        web_sys::BlobPropertyBag::new().type_("text/csv;charset=utf-8"),
+        &blob_property_bag,
     )?;
 
     // 创建下载链接
