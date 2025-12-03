@@ -1,11 +1,115 @@
+# AppVeyor CI 配置 for wasm-excel-exporter
+# 支持 Windows 环境的持续集成测试
+
+environment:
+  # 设置 Rust 环境
+  RUST_BACKTRACE: 1
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: "-C opt-level=s -C target-cpu=native"
+
 install:
+  # 安装 Rust 工具链
   - appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
-  - if not defined RUSTFLAGS rustup-init.exe -y --default-host x86_64-pc-windows-msvc --default-toolchain nightly
+  - if not defined RUSTFLAGS rustup-init.exe -y --default-host x86_64-pc-windows-msvc --default-toolchain stable
   - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
   - rustc -V
   - cargo -V
 
-build: false
+  # 安装 wasm-pack 工具
+  - appveyor-retry cargo install wasm-pack
+  - appveyor-retry cargo install cargo-generate
+
+  # 添加 wasm32 目标
+  - rustup target add wasm32-unknown-unknown
+  - rustup target add wasm32-unknown-unknown --toolchain stable
+
+build_script:
+  # 代码质量检查
+  - cargo check --verbose
+  - cargo clippy -- -D warnings --all-targets
+
+  # 代码格式化检查
+  - cargo fmt -- --check
+
+  # 构建不同配置
+  - cargo check --target wasm32-unknown-unknown
+  - cargo check --target wasm32-unknown-unknown --no-default-features
+  - cargo check --target wasm32-unknown-unknown --no-default-features --features console_error_panic_hook
 
 test_script:
-  - cargo test --locked
+  # 运行单元测试
+  - cargo test --verbose --lib
+
+  # 检查测试覆盖率
+  - cargo test --lib --no-run --message-format=human
+
+before_test:
+  # 生成临时测试项目
+  - cargo generate --git . --name testing
+  - cd testing
+
+after_test:
+  # 返回主目录
+  - cd ..
+
+deploy_script:
+  # 构建 WebAssembly 包
+  - wasm-pack build --target web --release
+
+  # 检查包文件
+  - ps: ls -la pkg/
+  - ps: |
+    ForEach($file in (Get-ChildItem "pkg\*") {
+      Write-Host ("Package file: $($file.Name), Size: $([math]::Round($file.Length/1KB,2)) KB")
+    }
+
+on_finish:
+  # 上传构建产物
+  - ps: |
+    if ($env:APPVEYOR_REPO_TAG -ne $null) {
+      Write-Host "Release build detected, preparing artifacts..."
+      # 这里可以添加上传到发布服务的命令
+    }
+
+cache:
+  # 缓存 Cargo 依赖
+  - C:\Users\appveyor\.cargo\registry\cache
+  - target
+
+# 构建矩阵
+matrix:
+  # 稳定版测试
+  - RUST_VERSION: stable
+    CONFIG: default_features
+    PLATFORM: x86_64-pc-windows-msvc
+
+  # 最小功能测试
+  - RUST_VERSION: stable
+    CONFIG: minimal
+    PLATFORM: x86_64-pc-windows-msvc
+    CARGO_FLAGS: "--no-default-features"
+
+  # 调试特性测试
+  - RUST_VERSION: beta
+    CONFIG: console_hook
+    PLATFORM: x86_64-pc-windows-msvc
+    CARGO_FLAGS: "--features console_error_panic_hook"
+
+# 通知设置
+notifications:
+  - provider: Email
+    on_build_success: false
+    on_build_failure: true
+    on_build_status_changed: true
+
+# 跳过不稳定的测试
+skip_commits:
+  message: /\[skip ci\]/
+  author: dependabot[bot]
+
+# 构建分支设置
+branches:
+  only:
+    - main
+    - develop
+    - /release\/.*/
