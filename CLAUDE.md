@@ -37,6 +37,10 @@ cargo test
 # 只运行本地测试（不包括 WebAssembly）
 cargo test --lib
 
+# 运行特定测试
+cargo test test_filename_extension_handling
+cargo test test_csv_writer_operations
+
 # 检查代码（不编译）
 cargo check
 
@@ -61,9 +65,22 @@ wasm-pack build --target web --release
   - `export_table_to_excel(table_id)`: 向后兼容的已弃用函数
   - `UrlGuard`: RAII 资源管理器，确保 URL 对象正确释放
   - 完整的输入验证、类型检查和错误处理机制
+  - 内置单元测试：测试文件名处理、验证逻辑、CSV writer 操作
 
 - **src/utils.rs**: WebAssembly 调试工具模块
   - `set_panic_hook()`: 开发环境下的 panic 信息显示
+
+- **tests/unit_tests.rs**: 综合单元测试套件
+  - 文件名扩展名处理和边界情况测试
+  - 字符串处理和 Unicode 支持
+  - CSV writer 操作和大数据处理测试
+  - 错误处理和 JsValue 转换测试
+  - 集成测试和函数签名兼容性
+
+- **tests/web_original.rs**: WebAssembly 浏览器测试
+  - 在实际 WebAssembly 环境中测试函数导出
+  - 错误处理机制验证
+  - 文件名处理逻辑在浏览器环境中的测试
 
 - **wasm-bindgen.toml**: WebAssembly 构建配置
   - 配置为 `cdylib` 类型，优化体积
@@ -113,6 +130,37 @@ pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue>
 - **调试支持**: 开发特性 `console_error_panic_hook` 提供详细的 panic 信息
 - **构建优化**: Release 模式下优先考虑代码大小（`opt-level = "s"`）
 
+## 测试策略
+
+### 本地单元测试
+```bash
+# 运行所有单元测试
+cargo test --lib
+
+# 运行特定测试类别
+cargo test test_filename_extension_handling  # 文件名处理
+cargo test test_csv_writer_operations        # CSV 操作
+cargo test test_string_handling_edge_cases    # 字符串边界情况
+cargo test test_memory_efficiency            # 内存效率测试
+```
+
+### WebAssembly 浏览器测试
+```bash
+# 在 Firefox 中测试
+wasm-pack test --headless --firefox
+
+# 在 Chrome 中测试
+wasm-pack test --headless --chrome
+```
+
+### 测试覆盖范围
+- **文件名处理**: 各种扩展名、Unicode 字符、特殊符号、边界情况
+- **CSV 操作**: 数据写入、引号转义、大数据量处理、内存效率
+- **错误处理**: JsValue 转换、格式化错误消息、边界条件
+- **字符串处理**: 多语言字符、大小写转换、长度计算
+- **集成测试**: 函数签名兼容性、返回类型处理
+- **WebAssembly 环境**: 浏览器环境中的实际功能测试
+
 ## 错误处理和调试
 
 ### 开发环境调试
@@ -129,9 +177,15 @@ set_panic_hook();
 - Blob 创建失败或浏览器不支持下载
 - WebAssembly 初始化失败
 
+### 错误消息格式
+- **中文错误消息**: 所有用户可见的错误都使用中文
+- **详细信息**: 包含行号、列号等具体定位信息
+- **调试信息**: 在开发模式下提供详细的上下文
+
 ## 性能和安全特性
 
 - **零拷贝操作**: CSV 数据在内存中直接构建，避免不必要的数据复制
 - **内存安全**: Rust 编译时保证，防止缓冲区溢出、使用后释放等漏洞
 - **资源管理**: RAII 确保 Web 资源（如 Blob URL）的自动清理
 - **输入验证**: 对所有用户输入进行严格的类型和边界检查
+- **大数据处理**: 支持高效处理 1000+ 行表格数据，内存使用优化

@@ -3,7 +3,6 @@
 //! 由于 wasm32 目标无法直接运行，这个模块提供等效的单元测试
 //! 用于验证核心逻辑和边界条件
 
-use wasm_excel_exporter::*;
 use wasm_bindgen::JsValue;
 
 #[test]
@@ -35,10 +34,11 @@ fn test_filename_extension_handling() {
 #[test]
 fn test_filename_edge_cases() {
     // 测试文件名边界情况
+    let long_filename = "a".repeat(1000);
     let edge_cases = vec![
         ("a.csv", "a.csv"), // 简单情况
-        ("a" * 1000, "a.csv"), // 长文件名
-        ("" * 500, "table_export.csv"), // 空字符串
+        (&long_filename, "a.csv"), // 长文件名
+        ("", "table_export.csv"), // 空字符串
         ("中文.csv", "中文.csv"), // Unicode 字符
         ("test.csv", "test.csv"), // 已有扩展名
         ("test", "test.csv"), // 需要添加扩展名
@@ -105,7 +105,6 @@ fn test_validation_logic() {
 #[test]
 fn test_error_handling_simulation() {
     // 模拟错误处理机制
-    use std::error::Error;
 
     // 测试 JsValue 错误转换
     let error_msg = "测试错误";
@@ -154,15 +153,15 @@ fn test_csv_writer_with_quotes() {
     // 测试包含引号和逗号的数据
     let mut wtr = Writer::from_writer(Cursor::new(Vec::new()));
     let test_data = vec![
-        "Product \"A\"", // 包含引号
-        "Item, with, commas", // 包含逗号
-        "Line\nbreak", // 包含换行符
-        "Value with \"quotes\" and, commas", // 复杂情况
+        vec!["Product \"A\""], // 包含引号
+        vec!["Item, with, commas"], // 包含逗号
+        vec!["Line\nbreak"], // 包含换行符
+        vec!["Value with \"quotes\" and, commas"], // 复杂情况
     ];
 
     for record in &test_data {
         assert!(wtr.write_record(record).is_ok(),
-                "写入包含特殊字符的记录应该成功: {}", record);
+                "写入包含特殊字符的记录应该成功: {:?}", record);
     }
 
     assert!(wtr.flush().is_ok(), "CSV flush 操作应该成功");
