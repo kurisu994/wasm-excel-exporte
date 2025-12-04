@@ -6,7 +6,8 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{
-    Blob, HtmlAnchorElement, HtmlTableCellElement, HtmlTableElement, HtmlTableRowElement, Url,
+    Blob, HtmlAnchorElement, HtmlTableCellElement, HtmlTableElement, HtmlTableRowElement,
+    HtmlTableSectionElement, Url,
 };
 
 // 使用 `wee_alloc` 作为全局分配器以减小 WASM 文件大小
@@ -400,6 +401,7 @@ pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue> {
 #[wasm_bindgen]
 pub async fn export_table_to_csv_batch(
     table_id: String,
+    tbody_id: Option<String>,
     filename: Option<String>,
     batch_size: Option<u32>,
     progress_callback: Option<js_sys::Function>,
@@ -420,23 +422,41 @@ pub async fn export_table_to_csv_batch(
     let document = window.document()
         .ok_or_else(|| JsValue::from_str("无法获取 document 对象"))?;
 
-    // 根据 table_id 获取 table 元素，并进行类型检查
+    // 1. 获取主表格（通常包含表头）
     let table_element = document.get_element_by_id(&table_id)
         .ok_or_else(|| JsValue::from_str(&format!("找不到 ID 为 '{}' 的表格元素", table_id)))?;
-
     let table = table_element.dyn_into::<HtmlTableElement>()
         .map_err(|_| JsValue::from_str(&format!("元素 '{}' 不是有效的 HTML 表格", table_id)))?;
+    let table_rows = table.rows();
+    let table_row_count = table_rows.length() as usize;
 
-    // 创建一个 CSV 写入器
-    let mut wtr = Writer::from_writer(Cursor::new(Vec::new()));
+    // 2. 获取数据表格体（如果有）
+    let mut tbody_rows_collection = None;
+    let mut tbody_row_count = 0;
 
-    // 遍历 table 中的每一行
-    let rows = table.rows();
-    let row_count = rows.length() as usize;
+    if let Some(tid) = tbody_id {
+        if !tid.is_empty() {
+            let tbody_element = document.get_element_by_id(&tid)
+                .ok_or_else(|| JsValue::from_str(&format!("找不到 ID 为 '{}' 的 tbody 元素", tid)))?;
+            
+            // 尝试转换为 HtmlTableSectionElement (tbody)
+            let tbody = tbody_element.dyn_into::<HtmlTableSectionElement>()
+                .map_err(|_| JsValue::from_str(&format!("元素 '{}' 不是有效的 HTML 表格部分(tbody)", tid)))?;
+            
+            let rows = tbody.rows();
+            tbody_row_count = rows.length() as usize;
+            tbody_rows_collection = Some(rows);
+        }
+    }
 
-    if row_count == 0 {
+    let total_rows = table_row_count + tbody_row_count;
+
+    if total_rows == 0 {
         return Err(JsValue::from_str("表格为空，没有数据可导出"));
     }
+
+    // 创建 CSV 写入器
+    let mut wtr = Writer::from_writer(Cursor::new(Vec::new()));
 
     // 报告初始进度
     if let Some(ref callback) = progress_callback {
@@ -445,12 +465,24 @@ pub async fn export_table_to_csv_batch(
 
     // 分批处理数据
     let mut current_row = 0;
-    while current_row < row_count {
-        let batch_end = std::cmp::min(current_row + batch_size, row_count);
+    while current_row < total_rows {
+        let batch_end = std::cmp::min(current_row + batch_size, total_rows);
 
         // 处理当前批次
         for i in current_row..batch_end {
-            let row = rows.get_with_index(i as u32)
+            let row_element = if i < table_row_count {
+                // 从主表格读取
+                table_rows.get_with_index(i as u32)
+            } else {
+                // 从 tbody 读取
+                if let Some(ref rows) = tbody_rows_collection {
+                    rows.get_with_index((i - table_row_count) as u32)
+                } else {
+                    None
+                }
+            };
+
+            let row = row_element
                 .ok_or_else(|| JsValue::from_str(&format!("无法获取第 {} 行数据", i + 1)))?;
 
             let row = row.dyn_into::<HtmlTableRowElement>()
@@ -481,12 +513,12 @@ pub async fn export_table_to_csv_batch(
 
         // 报告进度
         if let Some(ref callback) = progress_callback {
-            let progress = (current_row as f64 / row_count as f64) * 100.0;
+            let progress = (current_row as f64 / total_rows as f64) * 100.0;
             let _ = callback.call1(&JsValue::NULL, &JsValue::from_f64(progress));
         }
 
-        // 在批次之间让出控制权（使用 setTimeout(0) 的异步版本）
-        if current_row < row_count {
+        // 在批次之间让出控制权
+        if current_row < total_rows {
             yield_to_browser().await?;
         }
     }
@@ -558,4 +590,5 @@ async fn yield_to_browser() -> Result<(), JsValue> {
     JsFuture::from(promise).await?;
     Ok(())
 }
+
 

@@ -491,12 +491,13 @@
             }
           };
 
-          // 执行导出 - 使用分批异步处理
+          // 执行导出 - 使用分批异步处理（DOM读取模式）
           const today = new Date().toISOString().split("T")[0];
           const filename = `产品数据_${today}.csv`;
 
           await export_table_to_csv_batch(
             "large-data-table",
+            "table-body", // 传入 tbody ID，支持分离的表格结构
             filename,
             1000, // 每批处理 1000 行
             progressCallback

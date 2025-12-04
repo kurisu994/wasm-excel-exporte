@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/rust-edition%202024-orange.svg" alt="Rust Edition" />
     <img src="https://img.shields.io/badge/test_coverage-100%25-brightgreen.svg" alt="Test Coverage" />
     <img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-green.svg" alt="License" />
-    <img src="https://img.shields.io/badge/wasm_size-514KB-yellow.svg" alt="WASM Size" />
+    <img src="https://img.shields.io/badge/wasm_size-531KB-yellow.svg" alt="WASM Size" />
   </p>
 
 <sub>Built with 🦀🕸 by <a href="https://rustwasm.github.io/">Rust and WebAssembly</a></sub>
