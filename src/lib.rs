@@ -4,6 +4,7 @@ use csv::Writer;
 use std::io::Cursor;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use wasm_bindgen_futures::JsFuture;
 use web_sys::{
     Blob, HtmlAnchorElement, HtmlTableCellElement, HtmlTableElement, HtmlTableRowElement, Url,
 };
@@ -368,3 +369,193 @@ impl Drop for UrlGuard {
 pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue> {
     export_table_to_csv(table_id, None)
 }
+
+/// 分批异步导出 HTML 表格到 CSV 文件
+///
+/// 这个函数将表格数据分批处理，在批次之间让出控制权给浏览器事件循环，
+/// 从而避免在处理大量数据时阻塞主线程导致页面卡死。
+///
+/// # 参数
+/// * `table_id` - 要导出的 HTML 表格元素的 ID
+/// * `filename` - 可选的导出文件名（可选，默认为 "table_export.csv"）
+/// * `batch_size` - 每批处理的行数（默认 1000）
+/// * `progress_callback` - 进度回调函数，接收进度百分比 (0-100)
+///
+/// # 返回值
+/// * `Promise<void>` - 异步操作的 Promise
+///
+/// # 示例
+/// ```javascript
+/// import { export_table_to_csv_batch } from './pkg/wasm_excel_exporter.js';
+///
+/// await export_table_to_csv_batch(
+///     'my-table',
+///     'data.csv',
+///     1000,  // 每批 1000 行
+///     (progress) => {
+///         console.log(`进度: ${progress}%`);
+///     }
+/// );
+/// ```
+#[wasm_bindgen]
+pub async fn export_table_to_csv_batch(
+    table_id: String,
+    filename: Option<String>,
+    batch_size: Option<u32>,
+    progress_callback: Option<js_sys::Function>,
+) -> Result<JsValue, JsValue> {
+    // 输入验证
+    if table_id.is_empty() {
+        return Err(JsValue::from_str("表格 ID 不能为空"));
+    }
+
+    let batch_size = batch_size.unwrap_or(1000) as usize;
+    if batch_size == 0 {
+        return Err(JsValue::from_str("批次大小必须大于 0"));
+    }
+
+    // 安全地获取全局的 window 和 document 对象
+    let window = web_sys::window()
+        .ok_or_else(|| JsValue::from_str("无法获取 window 对象"))?;
+    let document = window.document()
+        .ok_or_else(|| JsValue::from_str("无法获取 document 对象"))?;
+
+    // 根据 table_id 获取 table 元素，并进行类型检查
+    let table_element = document.get_element_by_id(&table_id)
+        .ok_or_else(|| JsValue::from_str(&format!("找不到 ID 为 '{}' 的表格元素", table_id)))?;
+
+    let table = table_element.dyn_into::<HtmlTableElement>()
+        .map_err(|_| JsValue::from_str(&format!("元素 '{}' 不是有效的 HTML 表格", table_id)))?;
+
+    // 创建一个 CSV 写入器
+    let mut wtr = Writer::from_writer(Cursor::new(Vec::new()));
+
+    // 遍历 table 中的每一行
+    let rows = table.rows();
+    let row_count = rows.length() as usize;
+
+    if row_count == 0 {
+        return Err(JsValue::from_str("表格为空，没有数据可导出"));
+    }
+
+    // 报告初始进度
+    if let Some(ref callback) = progress_callback {
+        let _ = callback.call1(&JsValue::NULL, &JsValue::from_f64(0.0));
+    }
+
+    // 分批处理数据
+    let mut current_row = 0;
+    while current_row < row_count {
+        let batch_end = std::cmp::min(current_row + batch_size, row_count);
+
+        // 处理当前批次
+        for i in current_row..batch_end {
+            let row = rows.get_with_index(i as u32)
+                .ok_or_else(|| JsValue::from_str(&format!("无法获取第 {} 行数据", i + 1)))?;
+
+            let row = row.dyn_into::<HtmlTableRowElement>()
+                .map_err(|_| JsValue::from_str(&format!("第 {} 行不是有效的表格行", i + 1)))?;
+
+            let mut row_data = Vec::new();
+            // 遍历每一行中的每一个单元格
+            let cells = row.cells();
+            let cell_count = cells.length();
+
+            for j in 0..cell_count {
+                let cell = cells.get_with_index(j)
+                    .ok_or_else(|| JsValue::from_str(&format!("无法获取第 {} 行第 {} 列单元格", i + 1, j + 1)))?;
+
+                let cell = cell.dyn_into::<HtmlTableCellElement>()
+                    .map_err(|_| JsValue::from_str(&format!("第 {} 行第 {} 列不是有效的表格单元格", i + 1, j + 1)))?;
+
+                let cell_text = cell.inner_text();
+                row_data.push(cell_text);
+            }
+
+            // 安全地将行数据写入 CSV
+            wtr.write_record(&row_data)
+                .map_err(|e| JsValue::from_str(&format!("写入 CSV 数据失败: {}", e)))?;
+        }
+
+        current_row = batch_end;
+
+        // 报告进度
+        if let Some(ref callback) = progress_callback {
+            let progress = (current_row as f64 / row_count as f64) * 100.0;
+            let _ = callback.call1(&JsValue::NULL, &JsValue::from_f64(progress));
+        }
+
+        // 在批次之间让出控制权（使用 setTimeout(0) 的异步版本）
+        if current_row < row_count {
+            yield_to_browser().await?;
+        }
+    }
+
+    // 安全地完成 CSV 写入
+    wtr.flush()
+        .map_err(|e| JsValue::from_str(&format!("完成 CSV 写入失败: {}", e)))?;
+
+    // 获取 CSV 数据
+    let csv_data = wtr.into_inner()
+        .map_err(|e| JsValue::from_str(&format!("获取 CSV 数据失败: {}", e)))?;
+
+    if csv_data.get_ref().is_empty() {
+        return Err(JsValue::from_str("没有可导出的数据"));
+    }
+
+    // 安全地创建 Blob 对象
+    let blob_property_bag = web_sys::BlobPropertyBag::new();
+    blob_property_bag.set_type("text/csv;charset=utf-8");
+
+    let array = js_sys::Array::of1(&js_sys::Uint8Array::from(&csv_data.get_ref()[..]));
+    let blob = Blob::new_with_u8_array_sequence_and_options(&array, &blob_property_bag)
+        .map_err(|e| JsValue::from_str(&format!("创建 Blob 对象失败: {:?}", e)))?;
+
+    // 安全地创建下载链接
+    let url = Url::create_object_url_with_blob(&blob)
+        .map_err(|e| JsValue::from_str(&format!("创建下载链接失败: {:?}", e)))?;
+
+    // 使用 RAII 模式确保 URL 资源释放
+    let _url_guard = UrlGuard::new(&url);
+
+    // 设置文件名（默认为 table_export.csv）
+    let final_filename = filename.unwrap_or_else(|| "table_export.csv".to_string());
+
+    // 验证文件名安全性
+    if let Err(e) = validate_filename(&final_filename) {
+        return Err(JsValue::from_str(&format!("文件名验证失败: {}", e)));
+    }
+
+    let final_filename = if final_filename.to_lowercase().ends_with(".csv") {
+        final_filename
+    } else {
+        format!("{}.csv", final_filename)
+    };
+
+    let anchor = document.create_element("a")
+        .map_err(|e| JsValue::from_str(&format!("创建下载链接元素失败: {:?}", e)))?;
+    let anchor = anchor.dyn_into::<HtmlAnchorElement>()
+        .map_err(|_| JsValue::from_str("创建的元素不是有效的锚点元素"))?;
+
+    anchor.set_href(&url);
+    anchor.set_download(&final_filename);
+
+    // 触发下载
+    anchor.click();
+
+    Ok(JsValue::UNDEFINED)
+}
+
+/// 让出控制权给浏览器事件循环
+///
+/// 使用 setTimeout(0) 创建一个微任务，允许浏览器处理其他事件
+async fn yield_to_browser() -> Result<(), JsValue> {
+    let promise = js_sys::Promise::new(&mut |resolve, _reject| {
+        let window = web_sys::window().expect("无法获取 window 对象");
+        let _ = window.set_timeout_with_callback_and_timeout_and_arguments_0(&resolve, 0);
+    });
+
+    JsFuture::from(promise).await?;
+    Ok(())
+}
+

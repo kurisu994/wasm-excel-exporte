@@ -21,7 +21,7 @@
   },
   "editor.formatOnSave": true,
   "editor.codeActionsOnSave": {
-    "source.fixAll": true
+    "source.fixAll": "explicit"
   },
   "rust-analyzer.rustfmt.overrideCommand": "rustfmt"
 }
