@@ -283,8 +283,12 @@
         font-size: 14px;
         color: #666;
       }
-      /* 优化大量数据的渲染性能 */
-      /* content-visibility: auto; 已移除，因为会导致滚动白屏问题 */
+
+      /* 硬件加速优化滚动性能 */
+      .tbody-container {
+        transform: translateZ(0);
+        -webkit-overflow-scrolling: touch;
+      }
     </style>
   </head>
   <body>
@@ -389,7 +393,7 @@
 
               // 渲染配置
               const totalRows = rows.length;
-              const batchSize = 1000; // 每批渲染 1000 行
+              const batchSize = 500; // 每批渲染 500 行
               let currentIndex = 0;
 
               addLog(`⚡️ 数据生成完毕，开始渲染 ${totalRows.toLocaleString()} 行数据...`);
@@ -404,7 +408,6 @@
                   const rowData = rows[i];
                   const row = document.createElement("tr");
 
-                  // 使用 innerHTML 构建行内容（比逐个创建单元格更快）
                   // 使用 innerHTML 构建行内容
                   row.innerHTML = `
                     <td>${rowData.id}</td>
@@ -432,19 +435,21 @@
                 loadingProgress.textContent = `渲染中... ${progress}% (${currentIndex.toLocaleString()} / ${totalRows.toLocaleString()})`;
 
                 if (currentIndex < totalRows) {
-                  // 调度下一批次
-                  requestAnimationFrame(renderBatch);
+                  // 给浏览器更多时间处理，使用 setTimeout 替代 requestAnimationFrame
+                  setTimeout(renderBatch, 0);
                 } else {
-                  // 渲染完成
-                  const endTime = performance.now();
-                  const duration = ((endTime - startTime) / 1000).toFixed(2);
+                  // 渲染完成，延迟一帧后关闭加载提示
+                  requestAnimationFrame(() => {
+                    const endTime = performance.now();
+                    const duration = ((endTime - startTime) / 1000).toFixed(2);
 
-                  loadingOverlay.classList.remove("show"); // Use classList.remove instead of style.display
-                  addLog(`✅ 渲染完成！总耗时: ${duration}秒`);
-                  document.getElementById("row-count").textContent = totalRows.toLocaleString(); // Update row count
-                  exportBtn.disabled = false;
-                  worker.terminate(); // Terminate worker after rendering
-                  resolve(); // Resolve the promise
+                    loadingOverlay.classList.remove("show");
+                    addLog(`✅ 渲染完成！总耗时: ${duration}秒`);
+                    document.getElementById("row-count").textContent = totalRows.toLocaleString();
+                    exportBtn.disabled = false;
+                    worker.terminate();
+                    resolve();
+                  });
                 }
               }
 
@@ -582,8 +587,8 @@
           await initWasm();
 
           // 然后异步生成数据（使用 Worker，不阻塞）
-          // 默认生成 1000 行
-          await generateTableData(100_000);
+          // 默认生成 10000 行
+          await generateTableData(10_000);
         } catch (error) {
           console.error("初始化失败:", error);
           addLog("❌ 初始化失败: " + error);
