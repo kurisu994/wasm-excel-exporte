@@ -298,6 +298,6 @@ const filename = `${reportType}_${date}.csv`;
 
 **需要帮助？**
 - 查看主项目 [README](../README.md)
-- 提交 [Issue](https://github.com/kurisuu/wasm-excel-exporter/issues)
+- 提交 [Issue](https://github.com/kurisu994/wasm-excel-exporte/issues)
 - 阅读 [API 文档](../EXAMPLES.md)
 

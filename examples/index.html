@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wasm-excel-exporter 示例导航</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+                         'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .example-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .example-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .example-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .example-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .example-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .example-desc {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 0.95rem;
+        }
+
+        .example-features {
+            list-style: none;
+            margin-bottom: 15px;
+        }
+
+        .example-features li {
+            color: #555;
+            padding: 4px 0;
+            font-size: 0.9rem;
+        }
+
+        .example-features li::before {
+            content: '✓ ';
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .example-tag {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+
+        .info-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .info-section h2 {
+            color: #333;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            padding-left: 12px;
+        }
+
+        .info-section p, .info-section ol {
+            color: #555;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .info-section ol {
+            padding-left: 20px;
+        }
+
+        .info-section li {
+            margin-bottom: 8px;
+        }
+
+        .info-section code {
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #d63384;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+        }
+
+        footer a {
+            color: white;
+            text-decoration: none;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.5);
+            transition: border-color 0.3s ease;
+        }
+
+        footer a:hover {
+            border-bottom-color: white;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📊 wasm-excel-exporter</h1>
+            <p class="subtitle">WebAssembly 驱动的高性能表格导出库 - 示例演示</p>
+        </header>
+
+        <div class="info-section">
+            <h2>🚀 开始前准备</h2>
+            <ol>
+                <li>确保已构建 WASM 包：<code>wasm-pack build --target web</code></li>
+                <li>使用本地服务器运行（不支持 <code>file://</code> 协议）</li>
+                <li>推荐使用：<code>basic-http-server .</code> 或 <code>python -m http.server 8000</code></li>
+            </ol>
+        </div>
+
+        <div class="examples-grid">
+            <!-- 基本导出示例 -->
+            <a href="basic-export.html" class="example-card">
+                <div class="example-icon">🎯</div>
+                <div class="example-title">基本导出</div>
+                <div class="example-desc">快速上手，学习最基本的表格导出功能</div>
+                <ul class="example-features">
+                    <li>默认文件名导出</li>
+                    <li>自定义文件名</li>
+                    <li>带日期的文件名</li>
+                </ul>
+                <span class="example-tag">入门推荐</span>
+            </a>
+
+            <!-- 进度条导出示例 -->
+            <a href="progress-export.html" class="example-card">
+                <div class="example-icon">📊</div>
+                <div class="example-title">进度条导出</div>
+                <div class="example-desc">处理大数据集时提供实时进度反馈</div>
+                <ul class="example-features">
+                    <li>大数据集处理</li>
+                    <li>实时进度显示</li>
+                    <li>性能统计</li>
+                    <li>操作日志</li>
+                </ul>
+                <span class="example-tag">生产环境</span>
+            </a>
+
+            <!-- 高级特性示例 -->
+            <a href="advanced-features.html" class="example-card">
+                <div class="example-icon">⚡</div>
+                <div class="example-title">高级特性</div>
+                <div class="example-desc">探索更多高级功能和最佳实践</div>
+                <ul class="example-features">
+                    <li>文件名安全验证</li>
+                    <li>批量导出</li>
+                    <li>错误处理</li>
+                    <li>复杂场景演示</li>
+                </ul>
+                <span class="example-tag">进阶学习</span>
+            </a>
+        </div>
+
+        <div class="info-section">
+            <h2>📖 更多资源</h2>
+            <p>
+                查看 <a href="README.md" style="color: #667eea; text-decoration: underline;">README.md</a>
+                了解详细的 API 文档、使用指南和故障排除技巧。
+            </p>
+        </div>
+
+        <footer>
+            <p>
+                ⭐ <a href="https://github.com/kurisu994/wasm-excel-exporte" target="_blank">GitHub 仓库</a>
+                |
+                📄 许可证: MIT OR Apache-2.0
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
+

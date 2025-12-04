@@ -114,14 +114,14 @@ bun add wasm-excel-exporter
 
 ```bash
 # 下载预构建的包
-wget https://github.com/kurisuu/wasm-excel-exporter/releases/latest/download/pkg.tar.gz
+wget https://github.com/kurisu994/wasm-excel-exporte/releases/latest/download/pkg.tar.gz
 tar -xzf pkg.tar.gz
 ```
 
 #### 方式 3：从源码构建
 
 ```bash
-git clone https://github.com/kurisuu/wasm-excel-exporter.git
+git clone https://github.com/kurisu994/wasm-excel-exporte.git
 cd wasm-excel-exporter
 wasm-pack build --target web
 ```
@@ -465,7 +465,7 @@ wasm-excel-exporter/
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/kurisuu/wasm-excel-exporter.git
+git clone https://github.com/kurisu994/wasm-excel-exporte.git
 cd wasm-excel-exporter
 
 # 2. 构建项目
@@ -778,10 +778,10 @@ git push origin v1.2.0
 遇到问题？我们随时为您提供帮助！
 
 1. 📖 查看 [文档](./EXAMPLES.md) 和 [FAQ](./docs/FAQ.md)
-2. 🔍 搜索现有的 [Issues](https://github.com/kurisuu/wasm-excel-exporter/issues)
-3. 💬 加入 [讨论区](https://github.com/kurisuu/wasm-excel-exporter/discussions)
-4. 🐛 报告 [Bug](https://github.com/kurisuu/wasm-excel-exporter/issues/new?template=bug_report.md)
-5. 💡 提出 [功能请求](https://github.com/kurisuu/wasm-excel-exporter/issues/new?template=feature_request.md)
+2. 🔍 搜索现有的 [Issues](https://github.com/kurisu994/wasm-excel-exporte/issues)
+3. 💬 加入 [讨论区](https://github.com/kurisu994/wasm-excel-exporte/discussions)
+4. 🐛 报告 [Bug](https://github.com/kurisu994/wasm-excel-exporte/issues/new?template=bug_report.md)
+5. 💡 提出 [功能请求](https://github.com/kurisu994/wasm-excel-exporte/issues/new?template=feature_request.md)
 
 ### 贡献方式
 
@@ -821,10 +821,10 @@ git push origin v1.2.0
 
 ### ⭐ 觉得有用？给我们一个 Star！
 
-**Made with ❤️ and 🦀 by [Kurisu](https://github.com/kurisuu)**
+**Made with ❤️ and 🦀 by [Kurisu](https://github.com/kurisu994)**
 
-[报告问题](https://github.com/kurisuu/wasm-excel-exporter/issues) • 
-[功能请求](https://github.com/kurisuu/wasm-excel-exporter/issues) • 
-[讨论区](https://github.com/kurisuu/wasm-excel-exporter/discussions)
+[报告问题](https://github.com/kurisu994/wasm-excel-exporte/issues) • 
+[功能请求](https://github.com/kurisu994/wasm-excel-exporte/issues) • 
+[讨论区](https://github.com/kurisu994/wasm-excel-exporte/discussions)
 
 </div>
