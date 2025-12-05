@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 项目概述
 
 这是一个企业级的 Rust WebAssembly 库，用于安全高效地将 HTML 表格数据导出为 CSV 文件。项目采用 v1.2.1 版本，使用 Rust Edition 2024，具有完善的错误处理、RAII 资源管理和模块化架构。
+项目仓库地址是：https://github.com/kurisu994/wasm-excel-exporte
 
 ## 常用命令
 
