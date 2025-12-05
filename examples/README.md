@@ -1,6 +1,6 @@
-# 📚 wasm-excel-exporter 使用示例
+# 📚 excel-exporter 使用示例
 
-这个目录包含了 wasm-excel-exporter 的完整使用示例。每个示例都是一个独立的 HTML 文件，展示了库的不同功能。
+这个目录包含了 excel-exporter 的完整使用示例。每个示例都是一个独立的 HTML 文件，展示了库的不同功能。
 
 ## 🚀 快速开始
 
@@ -339,6 +339,6 @@ const filename = `${reportType}_${date}.csv`;
 
 **需要帮助？**
 - 查看主项目 [README](../README.md)
-- 提交 [Issue](https://github.com/kurisu994/wasm-excel-exporte/issues)
+- 提交 [Issue](https://github.com/kurisu994/excel-exporter/issues)
 - 阅读 [API 文档](../EXAMPLES.md)
 

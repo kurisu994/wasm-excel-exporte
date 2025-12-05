@@ -1,4 +1,4 @@
-# AppVeyor CI 配置 for wasm-excel-exporter
+# AppVeyor CI 配置 for excel-exporter
 # 支持 Windows 环境的持续集成测试
 
 environment:

@@ -1,5 +1,5 @@
 [package]
-name = "wasm-excel-exporter"
+name = "excel-exporter"
 version = "1.1.0"
 edition = "2024"
 

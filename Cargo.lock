@@ -85,6 +85,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "excel-exporter"
+version = "1.2.1"
+dependencies = [
+ "console_error_panic_hook",
+ "csv",
+ "js-sys",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-bindgen-test",
+ "web-sys",
+ "wee_alloc",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -374,20 +388,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "wasm-excel-exporter"
-version = "1.2.1"
-dependencies = [
- "console_error_panic_hook",
- "csv",
- "js-sys",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-bindgen-test",
- "web-sys",
- "wee_alloc",
 ]
 
 [[package]]

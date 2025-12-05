@@ -3,7 +3,7 @@
 
 set -e
 
-echo "🦀 开始构建 wasm-excel-exporter..."
+echo "🦀 开始构建 excel-exporter..."
 
 # 清理旧的构建文件
 echo "🧹 清理旧的构建文件..."

@@ -1,6 +1,6 @@
 <div align="center">
 
-  <h1><code>wasm-excel-exporter</code></h1>
+  <h1><code>excel-exporter</code></h1>
 
   <p><strong>🦀 现代化的 WebAssembly 表格导出库</strong></p>
   
@@ -22,7 +22,7 @@
 
 ## 📋 项目简介
 
-`wasm-excel-exporter` 是一个高性能的 WebAssembly 库，让你可以轻松地在浏览器中将 HTML 表格导出为 CSV 文件。
+`excel-exporter` 是一个高性能的 WebAssembly 库，让你可以轻松地在浏览器中将 HTML 表格导出为 CSV 文件。
 
 ### 为什么选择这个库？
 
@@ -109,31 +109,31 @@
 
 ```bash
 # pnpm（推荐 - 更快的安装速度和更小的磁盘占用）
-pnpm add wasm-excel-exporter
+pnpm add excel-exporter
 
 # NPM
-npm install wasm-excel-exporter
+npm install excel-exporter
 
 # Yarn
-yarn add wasm-excel-exporter
+yarn add excel-exporter
 
 # Bun
-bun add wasm-excel-exporter
+bun add excel-exporter
 ```
 
 #### 方式 2：直接使用（无需构建）
 
 ```bash
 # 下载预构建的包
-wget https://github.com/kurisu994/wasm-excel-exporter/releases/latest/download/pkg.tar.gz
+wget https://github.com/kurisu994/excel-exporter/releases/latest/download/pkg.tar.gz
 tar -xzf pkg.tar.gz
 ```
 
 #### 方式 3：从源码构建
 
 ```bash
-git clone https://github.com/kurisu994/wasm-excel-exporte.git
-cd wasm-excel-exporter
+git clone https://github.com/kurisu994/excel-exporter.git
+cd excel-exporter
 wasm-pack build --target web
 ```
 
@@ -144,7 +144,7 @@ wasm-pack build --target web
 #### 导出单个表格
 
 ```javascript
-import init, { export_table_to_csv } from "wasm-excel-exporter";
+import init, { export_table_to_csv } from "excel-exporter";
 
 // 初始化模块（只需执行一次）
 await init();
@@ -159,7 +159,7 @@ export_table_to_csv("table-id", "销售报表_2024.csv");
 #### 带进度条的导出（推荐用于大表格）
 
 ```javascript
-import { export_table_to_csv_with_progress } from "wasm-excel-exporter";
+import { export_table_to_csv_with_progress } from "excel-exporter";
 
 export_table_to_csv_with_progress("large-table", "大数据.csv", (progress) => {
   console.log(`进度: ${Math.round(progress)}%`);
@@ -171,7 +171,7 @@ export_table_to_csv_with_progress("large-table", "大数据.csv", (progress) => 
 #### 分批异步导出（大数据量）
 
 ```javascript
-import { export_table_to_csv_batch } from "wasm-excel-exporter";
+import { export_table_to_csv_batch } from "excel-exporter";
 
 // 基本用法 - 处理 10,000+ 行数据
 await export_table_to_csv_batch("huge-table", "大数据.csv");
@@ -424,7 +424,7 @@ await export_table_to_csv_batch(
 
 ```jsx
 import { useState, useEffect } from "react";
-import init, { export_table_to_csv_with_progress } from "wasm-excel-exporter";
+import init, { export_table_to_csv_with_progress } from "excel-exporter";
 
 function TableExporter({ tableId }) {
   const [progress, setProgress] = useState(0);
@@ -453,7 +453,7 @@ function TableExporter({ tableId }) {
 ```vue
 <script setup>
 import { ref, onMounted } from "vue";
-import init, { export_table_to_csv_with_progress } from "wasm-excel-exporter";
+import init, { export_table_to_csv_with_progress } from "excel-exporter";
 
 const progress = ref(0);
 const ready = ref(false);
@@ -504,7 +504,7 @@ cargo install basic-http-server
 ### 项目结构
 
 ```
-wasm-excel-exporter/
+excel-exporter/
 ├── src/
 │   ├── lib.rs                    # 主入口，模块声明和重新导出
 │   ├── validation.rs             # 文件名验证模块 ⭐
@@ -555,8 +555,8 @@ wasm-excel-exporter/
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/kurisu994/wasm-excel-exporte.git
-cd wasm-excel-exporter
+git clone https://github.com/kurisu994/excel-exporter.git
+cd excel-exporter
 
 # 2. 构建项目
 wasm-pack build --target web
@@ -858,10 +858,10 @@ git push origin v1.2.0
 遇到问题？我们随时为您提供帮助！
 
 1. 📖 查看 [文档](./EXAMPLES.md) 和 [FAQ](./docs/FAQ.md)
-2. 🔍 搜索现有的 [Issues](https://github.com/kurisu994/wasm-excel-exporte/issues)
-3. 💬 加入 [讨论区](https://github.com/kurisu994/wasm-excel-exporte/discussions)
-4. 🐛 报告 [Bug](https://github.com/kurisu994/wasm-excel-exporte/issues/new?template=bug_report.md)
-5. 💡 提出 [功能请求](https://github.com/kurisu994/wasm-excel-exporte/issues/new?template=feature_request.md)
+2. 🔍 搜索现有的 [Issues](https://github.com/kurisu994/excel-exporter/issues)
+3. 💬 加入 [讨论区](https://github.com/kurisu994/excel-exporter/discussions)
+4. 🐛 报告 [Bug](https://github.com/kurisu994/excel-exporter/issues/new?template=bug_report.md)
+5. 💡 提出 [功能请求](https://github.com/kurisu994/excel-exporter/issues/new?template=feature_request.md)
 
 ### 贡献方式
 
@@ -903,8 +903,8 @@ git push origin v1.2.0
 
 **Made with ❤️ and 🦀 by [Kurisu](https://github.com/kurisu994)**
 
-[报告问题](https://github.com/kurisu994/wasm-excel-exporte/issues) •
-[功能请求](https://github.com/kurisu994/wasm-excel-exporte/issues) •
-[讨论区](https://github.com/kurisu994/wasm-excel-exporte/discussions)
+[报告问题](https://github.com/kurisu994/excel-exporter/issues) •
+[功能请求](https://github.com/kurisu994/excel-exporter/issues) •
+[讨论区](https://github.com/kurisu994/excel-exporter/discussions)
 
 </div>
