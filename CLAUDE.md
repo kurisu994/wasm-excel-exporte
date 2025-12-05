@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个企业级的 Rust WebAssembly 库，用于安全高效地将 HTML 表格数据导出为 CSV 文件。项目采用 v1.1.0 版本，使用 Rust Edition 2024，具有完善的错误处理和 RAII 资源管理。
+这是一个企业级的 Rust WebAssembly 库，用于安全高效地将 HTML 表格数据导出为 CSV 文件。项目采用 v1.2.1 版本，使用 Rust Edition 2024，具有完善的错误处理、RAII 资源管理和模块化架构。
 
 ## 常用命令
 
@@ -38,8 +38,9 @@ cargo test
 cargo test --lib
 
 # 运行特定测试
-cargo test test_filename_extension_handling
-cargo test test_csv_writer_operations
+cargo test test_ensure_extension_basic
+cargo test test_filename_validation_valid_simple
+cargo test test_csv_writer_large_dataset
 
 # 检查代码（不编译）
 cargo check
@@ -59,28 +60,43 @@ wasm-pack build --target web --release
 
 ## 项目架构
 
-### 核心文件结构和职责
-- **src/lib.rs**: 企业级主实现，包含完整的错误处理和 RAII 资源管理
-  - `export_table_to_csv(table_id, filename)`: 主导出函数（v1.1.0+）
-  - `export_table_to_excel(table_id)`: 向后兼容的已弃用函数
-  - `UrlGuard`: RAII 资源管理器，确保 URL 对象正确释放
-  - 完整的输入验证、类型检查和错误处理机制
-  - 内置单元测试：测试文件名处理、验证逻辑、CSV writer 操作
+### 模块化架构（v1.2.0+）
+项目采用清晰的模块化架构，每个模块职责单一，便于维护和扩展：
+
+- **src/lib.rs**: 主入口模块，负责模块声明和重新导出所有公共API
+- **src/validation.rs**: 文件名验证模块（🆕 v1.2.0）
+  - `validate_filename()`: 严格的文件名安全验证
+  - `ensure_extension()`: 确保文件名有正确的扩展名
+  - 防止路径遍历、危险字符、Windows保留名等安全问题
+
+- **src/resource.rs**: 资源管理模块（🆕 v1.2.0）
+  - `UrlGuard`: RAII 风格的 URL 资源管理器
+  - 确保在对象销毁时自动释放 Blob URL 资源
+
+- **src/core.rs**: 核心导出功能模块（🆕 v1.2.0）
+  - `export_table_to_csv()`: 主导出函数（同步版本）
+  - `export_table_to_csv_with_progress()`: 带进度回调的导出
+  - `export_table_to_excel()`: 向后兼容的已弃用函数
+
+- **src/batch_export.rs**: 分批异步导出功能模块（🆕 v1.2.1）
+  - `export_table_to_csv_batch()`: 分批异步导出函数
+  - `yield_to_browser()`: 让出控制权给浏览器事件循环
+  - 支持分离表头和数据的大数据量导出
 
 - **src/utils.rs**: WebAssembly 调试工具模块
   - `set_panic_hook()`: 开发环境下的 panic 信息显示
 
-- **tests/unit_tests.rs**: 综合单元测试套件
-  - 文件名扩展名处理和边界情况测试
-  - 字符串处理和 Unicode 支持
-  - CSV writer 操作和大数据处理测试
-  - 错误处理和 JsValue 转换测试
-  - 集成测试和函数签名兼容性
+- **tests/lib_tests.rs**: 综合单元测试套件（35个测试，100%覆盖）
+  - 文件名扩展名处理（5个测试）
+  - 输入验证逻辑（4个测试）
+  - CSV Writer 操作（6个测试）
+  - 文件名验证（14个测试）
+  - 边界和压力测试（3个测试）
+  - 回归测试（3个测试）
 
-- **tests/web_original.rs**: WebAssembly 浏览器测试
-  - 在实际 WebAssembly 环境中测试函数导出
-  - 错误处理机制验证
-  - 文件名处理逻辑在浏览器环境中的测试
+- **tests/browser/web_original.rs**: WebAssembly 浏览器测试
+  - 测试所有导出函数在浏览器环境中的行为
+  - 包含分批导出和进度回调的测试
 
 - **wasm-bindgen.toml**: WebAssembly 构建配置
   - 配置为 `cdylib` 类型，优化体积
@@ -107,14 +123,34 @@ wasm-pack build --target web --release
 
 ## 核心 API 使用
 
-### 主导出函数（v1.1.0+）
+### 主要导出函数
+1. **同步导出** - 适用于小到中等数据量
 ```rust
 #[wasm_bindgen]
 pub fn export_table_to_csv(table_id: &str, filename: Option<String>) -> Result<(), JsValue>
 ```
-- **参数**: `table_id` - HTML 表格元素 ID, `filename` - 可选的导出文件名
-- **功能**: 安全导出表格到 CSV，支持自定义文件名
-- **错误处理**: 全面的输入验证和异常处理
+
+2. **带进度回调的导出** - 适用于大型表格（100+ 行）
+```rust
+#[wasm_bindgen]
+pub fn export_table_to_csv_with_progress(
+    table_id: &str,
+    filename: Option<String>,
+    progress_callback: Option<js_sys::Function>
+) -> Result<(), JsValue>
+```
+
+3. **分批异步导出** - 适用于超大数据量（10,000+ 行）🆕
+```rust
+#[wasm_bindgen]
+pub async fn export_table_to_csv_batch(
+    table_id: String,
+    tbody_id: Option<String>,  // 可选：分离表头和数据
+    filename: Option<String>,
+    batch_size: Option<u32>,
+    progress_callback: Option<js_sys::Function>
+) -> Result<JsValue, JsValue>
+```
 
 ### 向后兼容函数
 ```rust
@@ -138,10 +174,11 @@ pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue>
 cargo test --lib
 
 # 运行特定测试类别
-cargo test test_filename_extension_handling  # 文件名处理
-cargo test test_csv_writer_operations        # CSV 操作
-cargo test test_string_handling_edge_cases    # 字符串边界情况
-cargo test test_memory_efficiency            # 内存效率测试
+cargo test test_ensure_extension               # 扩展名处理
+cargo test test_filename_validation           # 文件名验证
+cargo test test_csv_writer_operations           # CSV 操作
+cargo test test_string_handling_edge_cases      # 字符串边界情况
+cargo test test_memory_efficiency              # 内存效率测试
 ```
 
 ### WebAssembly 浏览器测试
@@ -188,4 +225,5 @@ set_panic_hook();
 - **内存安全**: Rust 编译时保证，防止缓冲区溢出、使用后释放等漏洞
 - **资源管理**: RAII 确保 Web 资源（如 Blob URL）的自动清理
 - **输入验证**: 对所有用户输入进行严格的类型和边界检查
-- **大数据处理**: 支持高效处理 1000+ 行表格数据，内存使用优化
+- **大数据处理**: 支持高效处理 10,000+ 行表格数据，分批异步处理避免页面卡死
+- **内存安全**: 模块化设计确保更好的内存管理和性能优化

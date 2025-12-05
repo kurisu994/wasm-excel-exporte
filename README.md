@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/rust-edition%202024-orange.svg" alt="Rust Edition" />
     <img src="https://img.shields.io/badge/test_coverage-100%25-brightgreen.svg" alt="Test Coverage" />
     <img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-green.svg" alt="License" />
-    <img src="https://img.shields.io/badge/wasm_size-531KB-yellow.svg" alt="WASM Size" />
+    <img src="https://img.shields.io/badge/wasm_size-117KB-green.svg" alt="WASM Size" />
   </p>
 
 <sub>Built with 🦀🕸 by <a href="https://rustwasm.github.io/">Rust and WebAssembly</a></sub>
@@ -29,8 +29,9 @@
 - **🎯 零配置**：开箱即用，无需复杂的设置
 - **🚀 极致性能**：Rust 原生速度 + WebAssembly 优化
 - **🔒 企业级安全**：内置文件名验证，防止路径遍历攻击
-- **📦 轻量级**：仅 514KB 的 WASM 文件（gzip 后更小）
-- **✅ 100% 测试覆盖**：33 个单元测试确保代码质量
+- **📦 轻量级**：仅 117KB 的 WASM 文件（gzip 后更小）
+- **✅ 100% 测试覆盖**：35 个单元测试确保代码质量
+- **🏗️ 模块化架构**：清晰的代码组织，易于维护和扩展
 - **🌍 国际化支持**：完美支持中文、日文、韩文等 Unicode 字符
 
 ### ✨ 核心特性
@@ -165,6 +166,40 @@ export_table_to_csv_with_progress("large-table", "大数据.csv", (progress) => 
   // 更新你的 UI 进度条
   progressBar.style.width = `${progress}%`;
 });
+```
+
+#### 分批异步导出（大数据量）
+
+```javascript
+import { export_table_to_csv_batch } from "wasm-excel-exporter";
+
+// 基本用法 - 处理 10,000+ 行数据
+await export_table_to_csv_batch("huge-table", "大数据.csv");
+
+// 高级用法 - 自定义配置
+await export_table_to_csv_batch(
+  "huge-table",
+  "百万数据.csv",
+  1000, // 每批处理 1000 行
+  (progress) => {
+    console.log(`进度: ${Math.round(progress)}%`);
+    progressBar.style.width = `${progress}%`;
+    progressText.textContent = `${Math.round(progress)}%`;
+  }
+);
+```
+
+#### 分离表头和数据导出（性能优化）
+
+```javascript
+// 当表格有大量数据时，可以分离表头和数据体
+await export_table_to_csv_batch(
+  "table-header",           // 主表格（包含表头）
+  "table-body",             // 数据表格体（可选）
+  "分离导出.csv",
+  500,                       // 较小的批次大小
+  progressCallback
+);
 ```
 
 #### 批量导出
@@ -471,11 +506,15 @@ cargo install basic-http-server
 ```
 wasm-excel-exporter/
 ├── src/
-│   ├── lib.rs                    # 核心实现（导出逻辑）
-│   └── utils.rs                  # 工具函数
+│   ├── lib.rs                    # 主入口，模块声明和重新导出
+│   ├── validation.rs             # 文件名验证模块 ⭐
+│   ├── resource.rs               # RAII 资源管理模块 ⭐
+│   ├── core.rs                   # 核心导出功能模块 ⭐
+│   ├── batch_export.rs           # 分批异步导出功能模块 ⭐
+│   └── utils.rs                  # WebAssembly 调试工具模块
 │
 ├── tests/
-│   ├── lib_tests.rs              # 单元测试（33个测试，100%覆盖）⭐
+│   ├── lib_tests.rs              # 综合单元测试（35个测试，100%覆盖）⭐
 │   ├── browser/                  # 浏览器环境测试
 │   │   ├── web_original.rs       # WASM 浏览器测试
 │   │   ├── test-all.sh           # 测试脚本
@@ -580,11 +619,11 @@ cargo doc --open
 
 ### 测试覆盖
 
-项目拥有 **100% 的测试覆盖率**，包含 33 个全面的单元测试：
+项目拥有 **100% 的测试覆盖率**，包含 35 个全面的单元测试：
 
 | 测试类别           | 数量 | 说明                                  |
 | ------------------ | ---- | ------------------------------------- |
-| 文件名处理         | 3    | 扩展名、Unicode、特殊情况             |
+| 文件名处理         | 5    | 扩展名、Unicode、特殊情况             |
 | 输入验证           | 4    | 空字符串、非空、空格、特殊字符        |
 | CSV Writer         | 6    | 创建、写入、Unicode、特殊字符、大数据 |
 | 文件名验证（有效） | 4    | 简单、Unicode、空格、特殊字符         |
@@ -597,7 +636,7 @@ cargo doc --open
 ```bash
 $ cargo test --test lib_tests
 
-running 33 tests
+running 35 tests
 test test_csv_writer_creation ... ok
 test test_csv_writer_empty_data ... ok
 test test_csv_writer_large_dataset ... ok
@@ -615,10 +654,11 @@ test result: ok. 33 passed; 0 failed; 0 ignored
 
 ### 性能优化
 
-项目使用了多种优化技术，将 WASM 文件从 ~800KB 优化到 **514KB**：
+项目使用了多种优化技术，将 WASM 文件从 ~800KB 优化到 **117KB**：
 
 | 优化技术      | 说明             | 效果        |
 | ------------- | ---------------- | ----------- |
+| 模块化架构    | 清晰的代码组织   | 提高可维护性 |
 | wee_alloc     | 轻量级内存分配器 | 减小 ~10KB  |
 | LTO           | 链接时优化       | 减小 ~100KB |
 | opt-level="z" | 代码大小优化     | 减小 ~80KB  |
@@ -758,16 +798,18 @@ git push origin v1.2.0
 
 ## 🌟 特性对比
 
-| 特性         | v1.0   | v1.1   | v1.2      |
-| ------------ | ------ | ------ | --------- |
-| 基本导出     | ✅     | ✅     | ✅        |
-| 自定义文件名 | ❌     | ✅     | ✅        |
-| 进度回调     | ❌     | ✅     | ✅        |
-| 文件名验证   | ❌     | 基础   | 完整      |
-| WASM 大小    | ~800KB | ~661KB | **514KB** |
-| 测试覆盖率   | ~20%   | ~30%   | **100%**  |
-| 示例数量     | 0      | 1      | **3**     |
-| 文档质量     | 基础   | 良好   | **优秀**  |
+| 特性               | v1.0   | v1.1   | v1.2      |
+| ------------------ | ------ | ------ | --------- |
+| 基本导出           | ✅     | ✅     | ✅        |
+| 自定义文件名       | ❌     | ✅     | ✅        |
+| 进度回调           | ❌     | ✅     | ✅        |
+| 分批异步导出       | ❌     | ❌     | ✅        |
+| 文件名验证         | ❌     | 基础   | 完整      |
+| 模块化架构         | ❌     | ❌     | ✅        |
+| WASM 大小          | ~800KB | ~661KB | **117KB** |
+| 测试覆盖率         | ~20%   | ~30%   | **100%**  |
+| 示例数量           | 0      | 1      | **3**     |
+| 文档质量           | 基础   | 良好   | **优秀**  |
 
 ---
 
@@ -787,9 +829,8 @@ git push origin v1.2.0
 
 ### 文件大小
 
-- WASM 原始：661KB
-- WASM 优化：514KB（-22%）
-- Gzip 压缩：~150KB（估计）
+- WASM 原始：117KB
+- Gzip 压缩：~40KB（估计）
 
 ---
 
