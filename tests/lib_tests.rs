@@ -2,7 +2,7 @@
 //!
 //! 这个模块包含了所有核心功能的单元测试，旨在达到 100% 代码覆盖率
 
-use wasm_excel_exporter::{validate_filename};
+use wasm_excel_exporter::{validate_filename, ensure_extension};
 use csv::Writer;
 use std::io::Cursor;
 
@@ -81,6 +81,25 @@ fn test_filename_extension_handling_special_cases() {
 
         assert_eq!(result, expected, "特殊情况处理失败: 输入={}, 期望={}", input, expected);
     }
+}
+
+#[test]
+fn test_ensure_extension_basic() {
+    // 测试基本的 ensure_extension 功能
+    assert_eq!(ensure_extension("file", "csv"), "file.csv");
+    assert_eq!(ensure_extension("file.txt", "csv"), "file.txt.csv");
+    assert_eq!(ensure_extension("file.CSV", "csv"), "file.CSV");
+    assert_eq!(ensure_extension("file.csv", "CSV"), "file.csv");
+    assert_eq!(ensure_extension("", "csv"), ".csv"); // 空文件名的情况
+}
+
+#[test]
+fn test_ensure_extension_unicode() {
+    // 测试 Unicode 文件名的扩展名处理
+    assert_eq!(ensure_extension("数据", "csv"), "数据.csv");
+    assert_eq!(ensure_extension("报告.txt", "csv"), "报告.txt.csv");
+    assert_eq!(ensure_extension("テスト.CSV", "csv"), "テスト.CSV");
+    assert_eq!(ensure_extension("파일.csv", "CSV"), "파일.csv");
 }
 
 // ============================================================================

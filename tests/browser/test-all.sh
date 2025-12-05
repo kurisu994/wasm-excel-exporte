@@ -117,13 +117,30 @@ cat > /tmp/wasm_test.html << 'EOF'
     <div id="result"></div>
 
     <script type="module">
-        import init, { export_table_to_csv } from './pkg/wasm_excel_exporter.js';
+        import init, {
+            export_table_to_csv,
+            export_table_to_csv_with_progress,
+            export_table_to_csv_batch,
+            export_table_to_excel
+        } from './pkg/wasm_excel_exporter.js';
 
         async function testExport() {
             try {
                 await init();
+
+                // 测试基本导出
                 export_table_to_csv('test-table');
-                document.getElementById('result').innerHTML = '<div style="color: green;">✅ 功能测试通过</div>';
+
+                // 测试带进度回调的导出
+                export_table_to_csv_with_progress('test-table', null, (p) => console.log(`Progress: ${p}%`));
+
+                // 测试分批导出
+                await export_table_to_csv_batch('test-table', null, 'batch.csv', 100, (p) => console.log(`Batch: ${p}%`));
+
+                // 测试向后兼容
+                export_table_to_excel('test-table');
+
+                document.getElementById('result').innerHTML = '<div style="color: green;">✅ 所有功能测试通过</div>';
             } catch (error) {
                 document.getElementById('result').innerHTML = '<div style="color: red;">❌ 功能测试失败: ' + error.message + '</div>';
             }

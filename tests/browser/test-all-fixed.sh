@@ -51,17 +51,16 @@ echo ""
 echo -e "${YELLOW}🧪 单元测试 (本地等效替代):${NC}"
 echo -e "${YELLOW}注意: wasm32 目标无法直接运行，使用本地单元测试作为等效替代${NC}"
 
-# 运行纯 Rust 单元测试（不包含 WebAssembly 依赖）
+# 运行所有单元测试
 echo ""
-echo -e "${BLUE}  运行核心逻辑测试:${NC}"
-run_test "文件名扩展名处理" "cargo test --lib --verbose unit_tests::test_filename_extension_handling"
-run_test "文件名边界情况" "cargo test --lib --verbose unit_tests::test_filename_edge_cases"
-run_test "文件名特殊字符处理" "cargo test --lib --verbose unit_tests::test_filename_special_characters"
-run_test "输入验证逻辑" "cargo test --lib --verbose unit_tests::test_validation_logic"
-run_test "错误处理模拟" "cargo test --lib --verbose unit_tests::test_error_handling_simulation"
-run_test "CSV Writer 操作测试" "cargo test --lib --verbose unit_tests::test_csv_writer_operations"
-run_test "内存效率测试" "cargo test --lib --verbose unit_tests::test_memory_efficiency"
-run_test "字符串处理边界情况" "cargo test --lib --verbose unit_tests::test_string_handling_edge_cases"
+echo -e "${BLUE}  运行所有单元测试:${NC}"
+run_test "单元测试" "cargo test --lib --verbose"
+
+# 特别测试验证模块
+run_test "文件名验证测试" "cargo test --lib --verbose test_filename_validation"
+
+# 测试扩展名处理
+run_test "ensure_extension 函数" "cargo test --lib --verbose test_ensure_extension"
 
 # 3. WebAssembly 构建 (等效测试)
 echo ""
@@ -162,6 +161,23 @@ try {
     } else {
         console.log('⚠️  包大小较大 (> 100KB)');
         console.log('💡 建议: 考虑启用 wee_alloc 特性');
+    }
+
+    // 检查 JavaScript 包中的新函数
+    const jsContent = fs.readFileSync(`${pkgDir}/wasm_excel_exporter.js`, 'utf8');
+    console.log('🔍 检查新的导出函数:');
+
+    const newFunctions = [
+        'export_table_to_csv_with_progress',
+        'export_table_to_csv_batch'
+    ];
+
+    for (const funcName of newFunctions) {
+        if (jsContent.includes(funcName)) {
+            console.log(`✅ 找到新函数: ${funcName}`);
+        } else {
+            console.log(`❌ 缺失新函数: ${funcName}`);
+        }
     }
 
     // 测试 package.json

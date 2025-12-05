@@ -243,12 +243,54 @@
             </div>
         </div>
 
+        <div class="test-section">
+            <h2>分批异步导出测试</h2>
+            <p>测试分批异步导出功能，适用于大数据量表格。</p>
+
+            <div class="input-group">
+                <label for="batch-size">批次大小 (行数):</label>
+                <input type="text" id="batch-size" value="50" placeholder="默认: 1000">
+            </div>
+
+            <div id="progress-container" style="display: none; margin: 15px 0;">
+                <label>导出进度:</label>
+                <div style="background-color: #e0e0e0; border-radius: 4px; height: 20px; margin-top: 5px;">
+                    <div id="progress-bar" style="background-color: #007bff; height: 100%; width: 0%; border-radius: 4px; transition: width 0.3s;"></div>
+                </div>
+                <span id="progress-text">0%</span>
+            </div>
+
+            <button onclick="exportBatch()">分批导出大数据表格</button>
+            <button onclick="exportBatchWithTbody()">分批导出 (分离表头和数据)</button>
+        </div>
+
+        <div class="test-section">
+            <h2>进度回调测试</h2>
+            <p>测试带进度回调的导出功能。</p>
+
+            <div id="progress-simple-container" style="display: none; margin: 15px 0;">
+                <label>简单导出进度:</label>
+                <div style="background-color: #e0e0e0; border-radius: 4px; height: 20px; margin-top: 5px;">
+                    <div id="progress-simple-bar" style="background-color: #28a745; height: 100%; width: 0%; border-radius: 4px; transition: width 0.3s;"></div>
+                </div>
+                <span id="progress-simple-text">0%</span>
+            </div>
+
+            <button onclick="exportWithProgress()">导出基础表格 (显示进度)</button>
+        </div>
+
         <div id="status-message"></div>
     </div>
 
     <script type="module">
         // 导入 WebAssembly 模块
-        import init, { export_table_to_csv, export_table_to_excel, set_panic_hook } from './pkg/wasm_excel_exporter.js';
+        import init, {
+            export_table_to_csv,
+            export_table_to_csv_with_progress,
+            export_table_to_csv_batch,
+            export_table_to_excel,
+            set_panic_hook
+        } from './pkg/wasm_excel_exporter.js';
 
         let wasmModule = null;
 
@@ -256,7 +298,13 @@
         async function initializeWasm() {
             try {
                 await init();
-                wasmModule = { export_table_to_csv, export_table_to_excel, set_panic_hook };
+                wasmModule = {
+                    export_table_to_csv,
+                    export_table_to_csv_with_progress,
+                    export_table_to_csv_batch,
+                    export_table_to_excel,
+                    set_panic_hook
+                };
 
                 // 启用 panic hook（开发调试用）
                 // set_panic_hook();
@@ -477,6 +525,133 @@
             } catch (error) {
                 showMessage('正确捕获到错误：元素不是表格', 'success');
                 logError(`预期错误 - 非表格元素: ${error.message}`);
+            }
+        };
+
+        // 分批异步导出函数
+        window.exportBatch = async function() {
+            if (!wasmModule) {
+                showMessage('WebAssembly 模块未初始化', 'error');
+                return;
+            }
+
+            const batchSize = parseInt(document.getElementById('batch-size').value) || 1000;
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+
+            // 显示进度条
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+
+            // 创建进度回调函数
+            const progressCallback = (progress) => {
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${Math.round(progress)}%`;
+            };
+
+            try {
+                await wasmModule.export_table_to_csv_batch(
+                    'large-table',
+                    null, // tbody_id
+                    `分批导出-${batchSize}行批次.csv`,
+                    batchSize,
+                    progressCallback
+                );
+                showMessage('分批导出成功！', 'success');
+            } catch (error) {
+                showMessage(`分批导出失败: ${error.message}`, 'error');
+                logError(`分批导出: ${error.message}`);
+            } finally {
+                // 3秒后隐藏进度条
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 3000);
+            }
+        };
+
+        // 分批导出带 tbody 测试
+        window.exportBatchWithTbody = async function() {
+            if (!wasmModule) {
+                showMessage('WebAssembly 模块未初始化', 'error');
+                return;
+            }
+
+            const batchSize = parseInt(document.getElementById('batch-size').value) || 1000;
+            const progressContainer = document.getElementById('progress-container');
+            const progressBar = document.getElementById('progress-bar');
+            const progressText = document.getElementById('progress-text');
+
+            // 显示进度条
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+
+            // 创建进度回调函数
+            const progressCallback = (progress) => {
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${Math.round(progress)}%`;
+            };
+
+            try {
+                await wasmModule.export_table_to_csv_batch(
+                    'large-table',
+                    'large-table-body', // tbody_id
+                    `分批导出-分离表头和数据.csv`,
+                    batchSize,
+                    progressCallback
+                );
+                showMessage('分批导出（分离表头）成功！', 'success');
+            } catch (error) {
+                showMessage(`分批导出失败: ${error.message}`, 'error');
+                logError(`分批导出（分离表头）: ${error.message}`);
+            } finally {
+                // 3秒后隐藏进度条
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 3000);
+            }
+        };
+
+        // 带进度回调的导出函数
+        window.exportWithProgress = async function() {
+            if (!wasmModule) {
+                showMessage('WebAssembly 模块未初始化', 'error');
+                return;
+            }
+
+            const progressContainer = document.getElementById('progress-simple-container');
+            const progressBar = document.getElementById('progress-simple-bar');
+            const progressText = document.getElementById('progress-simple-text');
+
+            // 显示进度条
+            progressContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+            progressText.textContent = '0%';
+
+            // 创建进度回调函数
+            const progressCallback = (progress) => {
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${Math.round(progress)}%`;
+            };
+
+            try {
+                wasmModule.export_table_to_csv_with_progress(
+                    'basic-table',
+                    '带进度回调的导出.csv',
+                    progressCallback
+                );
+                showMessage('带进度回调的导出成功！', 'success');
+
+                // 3秒后隐藏进度条
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 3000);
+            } catch (error) {
+                showMessage(`导出失败: ${error.message}`, 'error');
+                logError(`带进度导出: ${error.message}`);
+                progressContainer.style.display = 'none';
             }
         };
 
