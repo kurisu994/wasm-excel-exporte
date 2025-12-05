@@ -2,7 +2,7 @@
 //!
 //! 这个模块包含了所有核心功能的单元测试，旨在达到 100% 代码覆盖率
 
-use wasm_excel_exporter::{validate_filename, ensure_extension};
+use excel_exporter::{validate_filename, ensure_extension};
 use csv::Writer;
 use std::io::Cursor;
 

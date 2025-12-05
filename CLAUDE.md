@@ -7,6 +7,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 这是一个企业级的 Rust WebAssembly 库，用于安全高效地将 HTML 表格数据导出为 CSV 文件。项目采用 v1.2.1 版本，使用 Rust Edition 2024，具有完善的错误处理、RAII 资源管理和模块化架构。
 项目仓库地址是：https://github.com/kurisu994/excel-exporter
 
+### 版本管理
+
+为确保一致性，项目版本号应在以下文件中保持同步：
+- `Cargo.toml` - 主要版本定义
+- `wasm-bindgen.toml` - WebAssembly 构建配置
+- `CLAUDE.md` - 项目文档
+
 ## 常用命令
 
 ### WebAssembly 构建和测试
@@ -18,6 +25,9 @@ wasm-pack build
 wasm-pack build --target bundler  # webpack/rollup
 wasm-pack build --target nodejs    # Node.js
 wasm-pack build --target web       # 原生 Web
+
+# 使用项目构建脚本（推荐）
+./build.sh  # 自动执行清理、测试、构建和优化
 
 # 浏览器测试
 wasm-pack test --headless --firefox
@@ -57,6 +67,23 @@ cargo build --release
 
 # 检查 WebAssembly 代码大小
 wasm-pack build --target web --release
+
+# 完整的构建和优化流程（推荐）
+./build.sh  # 包含清理、测试、构建和 wasm-opt 优化
+```
+
+### 构建脚本说明
+
+项目提供了 `build.sh` 脚本来自动化完整的构建流程：
+
+```bash
+#!/bin/bash
+# 构建脚本会自动执行：
+# 1. 清理旧的构建文件
+# 2. 运行所有单元测试
+# 3. 构建 release 版本
+# 4. 使用 wasm-pack 构建
+# 5. 可选：使用 wasm-opt 进行额外优化
 ```
 
 ## 项目架构
@@ -166,6 +193,27 @@ pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue>
 - **内存分配**: 默认使用系统分配器，可选 `wee_alloc` 小型分配器（需要 nightly）
 - **调试支持**: 开发特性 `console_error_panic_hook` 提供详细的 panic 信息
 - **构建优化**: Release 模式下优先考虑代码大小（`opt-level = "s"`）
+
+### WebAssembly 文件大小优化
+
+项目使用多种优化技术将 WASM 文件大小从 ~800KB 优化到 117KB：
+
+```bash
+# 标准构建（开发模式）
+wasm-pack build --target web
+
+# 优化构建（生产模式）
+wasm-pack build --target web --release
+
+# 使用 wasm-opt 进一步优化（需要安装 wasm-opt）
+wasm-opt -Oz pkg/excel_exporter_bg.wasm -o pkg/excel_exporter_bg_opt.wasm
+```
+
+优化技术详情：
+- **wee_alloc**: 轻量级内存分配器，减少约 10KB
+- **LTO (Link Time Optimization)**: 链接时优化，减少约 100KB
+- **opt-level="s"**: 代码大小优化设置，减少约 80KB
+- **wasm-opt -Oz**: WebAssembly 后处理优化，减少约 150KB
 
 ## 测试策略
 

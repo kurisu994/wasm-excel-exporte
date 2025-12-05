@@ -28,7 +28,7 @@ use web_sys::{Blob, HtmlAnchorElement, HtmlTableCellElement, HtmlTableElement, H
 ///
 /// # 示例
 /// ```javascript
-/// import { export_table_to_csv_batch } from './pkg/wasm_excel_exporter.js';
+/// import { export_table_to_csv_batch } from './pkg/excel_exporter.js';
 ///
 /// await export_table_to_csv_batch(
 ///     'my-table',

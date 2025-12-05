@@ -6,7 +6,7 @@
 
 extern crate wasm_bindgen_test;
 use wasm_bindgen_test::*;
-use wasm_excel_exporter::*;
+use excel_exporter::*;
 use wasm_bindgen::JsValue;
 
 wasm_bindgen_test_configure!(run_in_browser);

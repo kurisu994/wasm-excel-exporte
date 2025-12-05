@@ -48,7 +48,7 @@ npx http-server .
 
 **关键代码**：
 ```javascript
-import init, { export_table_to_csv } from '../pkg/wasm_excel_exporter.js';
+import init, { export_table_to_csv } from '../pkg/excel_exporter.js';
 
 await init();
 export_table_to_csv('table-id', '文件名.csv');
@@ -70,7 +70,7 @@ export_table_to_csv('table-id', '文件名.csv');
 
 **关键代码**：
 ```javascript
-import init, { export_table_to_csv_with_progress } from '../pkg/wasm_excel_exporter.js';
+import init, { export_table_to_csv_with_progress } from '../pkg/excel_exporter.js';
 
 await init();
 export_table_to_csv_with_progress(
@@ -154,13 +154,13 @@ class VirtualScrollRenderer {
 
 1. **初始化 WASM 模块**
 ```javascript
-import init from '../pkg/wasm_excel_exporter.js';
+import init from '../pkg/excel_exporter.js';
 await init();
 ```
 
 2. **导出表格**
 ```javascript
-import { export_table_to_csv } from '../pkg/wasm_excel_exporter.js';
+import { export_table_to_csv } from '../pkg/excel_exporter.js';
 export_table_to_csv('your-table-id', '文件名');
 ```
 
@@ -177,7 +177,7 @@ try {
 
 #### 带进度回调
 ```javascript
-import { export_table_to_csv_with_progress } from '../pkg/wasm_excel_exporter.js';
+import { export_table_to_csv_with_progress } from '../pkg/excel_exporter.js';
 
 export_table_to_csv_with_progress(
     'large-table',
@@ -238,7 +238,7 @@ async function exportAll() {
 **解决方案**：
 1. 确保使用 HTTP 服务器（不是 file://）
 2. 检查 pkg/ 目录是否存在
-3. 确认路径正确（例如：`../pkg/wasm_excel_exporter.js`）
+3. 确认路径正确（例如：`../pkg/excel_exporter.js`）
 
 ### 问题：找不到表格元素
 **解决方案**：

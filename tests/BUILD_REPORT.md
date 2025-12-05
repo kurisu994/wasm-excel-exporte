@@ -6,9 +6,9 @@
 - **WASM 文件大小**: 117 KB
 
 ## 文件检查
-- ✅ wasm_excel_exporter.js
-- ✅ wasm_excel_exporter_bg.wasm
-- ✅ wasm_excel_exporter.d.ts
+- ✅ excel_exporter.js
+- ✅ excel_exporter_bg.wasm
+- ✅ excel_exporter.d.ts
 - ✅ package.json
 
 ## API 检查
@@ -28,7 +28,7 @@ import init, {
     export_table_to_csv,
     export_table_to_csv_with_progress,
     export_table_to_csv_batch
-} from './pkg/wasm_excel_exporter.js';
+} from './pkg/excel_exporter.js';
 
 await init();
 

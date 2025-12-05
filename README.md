@@ -72,7 +72,7 @@
 <html>
   <head>
     <script type="module">
-      import init, { export_table_to_csv } from "./pkg/wasm_excel_exporter.js";
+      import init, { export_table_to_csv } from "./pkg/excel_exporter.js";
 
       // 1. 初始化（只需一次）
       await init();
@@ -671,8 +671,8 @@ test result: ok. 33 passed; 0 failed; 0 ignored
 wasm-pack build --target web --release
 
 # 使用 wasm-opt 进一步优化
-wasm-opt -Oz pkg/wasm_excel_exporter_bg.wasm \
-    -o pkg/wasm_excel_exporter_bg_opt.wasm
+wasm-opt -Oz pkg/excel_exporter_bg.wasm \
+    -o pkg/excel_exporter_bg_opt.wasm
 ```
 
 ---

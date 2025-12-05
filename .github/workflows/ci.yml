@@ -58,9 +58,9 @@ jobs:
     - name: 检查包大小
       run: |
         echo "WebAssembly 文件大小:"
-        ls -lh pkg/wasm_excel_exporter_bg.wasm
+        ls -lh pkg/excel_exporter_bg.wasm
 
-        PACKAGE_SIZE=$(stat -c%s pkg/wasm_excel_exporter_bg.wasm)
+        PACKAGE_SIZE=$(stat -c%s pkg/excel_exporter_bg.wasm)
         echo "包大小: ${PACKAGE_SIZE} bytes"
 
         if [ $PACKAGE_SIZE -gt 100000 ]; then
@@ -116,7 +116,7 @@ jobs:
           <div id="result"></div>
 
           <script type="module">
-            import init, { export_table_to_csv } from './pkg/wasm_excel_exporter.js';
+            import init, { export_table_to_csv } from './pkg/excel_exporter.js';
 
             async function runTest() {
               try {

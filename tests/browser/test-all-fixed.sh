@@ -77,17 +77,17 @@ echo ""
 echo -e "${YELLOW}📦 包完整性检查:${NC}"
 
 run_test "包目录存在" "[ -d pkg ]"
-run_test "主 JS 文件存在" "[ -f pkg/wasm_excel_exporter.js ]"
-run_test "TypeScript 定义存在" "[ -f pkg/wasm_excel_exporter.d.ts ]"
-run_test "WebAssembly 文件存在" "[ -f pkg/wasm_excel_exporter_bg.wasm ]"
+run_test "主 JS 文件存在" "[ -f pkg/excel_exporter.js ]"
+run_test "TypeScript 定义存在" "[ -f pkg/excel_exporter.d.ts ]"
+run_test "WebAssembly 文件存在" "[ -f pkg/excel_exporter_bg.wasm ]"
 run_test "Package.json 配置" "[ -f pkg/package.json ]"
 
 # 5. 包大小和质量检查
 echo ""
 echo -e "${YELLOW}📊 包大小和质量检查:${NC}"
 
-if [ -f pkg/wasm_excel_exporter_bg.wasm ]; then
-    WASM_SIZE=$(stat -f%z pkg/wasm_excel_exporter_bg.wasm)
+if [ -f pkg/excel_exporter_bg.wasm ]; then
+    WASM_SIZE=$(stat -f%z pkg/excel_exporter_bg.wasm)
     echo -e "  WebAssembly 文件大小: ${WASM_SIZE} bytes ($((${WASM_SIZE} / 1024)) KB)"
 
     if [ $WASM_SIZE -gt 100000 ]; then
@@ -125,9 +125,9 @@ try {
     console.log('📦 检查包文件完整性...');
 
     const requiredFiles = [
-        'wasm_excel_exporter.js',
-        'wasm_excel_exporter.d.ts',
-        'wasm_excel_exporter_bg.wasm'
+        'excel_exporter.js',
+        'excel_exporter.d.ts',
+        'excel_exporter_bg.wasm'
     ];
 
     let allFilesExist = true;
@@ -149,7 +149,7 @@ try {
     }
 
     // 测试包大小
-    const wasmStats = fs.statSync(`${pkgDir}/wasm_excel_exporter_bg.wasm`);
+    const wasmStats = fs.statSync(`${pkgDir}/excel_exporter_bg.wasm`);
     const wasmSizeKB = Math.round(wasmStats.size / 1024);
 
     console.log(`📊 WebAssembly 文件大小: ${wasmSizeKB} KB`);
@@ -164,7 +164,7 @@ try {
     }
 
     // 检查 JavaScript 包中的新函数
-    const jsContent = fs.readFileSync(`${pkgDir}/wasm_excel_exporter.js`, 'utf8');
+    const jsContent = fs.readFileSync(`${pkgDir}/excel_exporter.js`, 'utf8');
     console.log('🔍 检查新的导出函数:');
 
     const newFunctions = [

@@ -65,12 +65,12 @@ echo ""
 echo -e "${YELLOW}📦 包完整性检查:${NC}"
 
 if [ -d "pkg" ]; then
-    run_test "包文件存在性" "[ -f pkg/wasm_excel_exporter.js ] && [ -f pkg/wasm_excel_exporter_bg.wasm ] && [ -f pkg/wasm_excel_exporter.d.ts ]"
+    run_test "包文件存在性" "[ -f pkg/excel_exporter.js ] && [ -f pkg/excel_exporter_bg.wasm ] && [ -f pkg/excel_exporter.d.ts ]"
     run_test "Package.json 检查" "node -e \"try { require('./pkg/package.json'); console.log('✅ Package.json 有效'); } catch(e) { console.log('❌ Package.json 无效'); process.exit(1); }\""
-    run_test "TypeScript 定义检查" "[ -f pkg/wasm_excel_exporter.d.ts ]"
+    run_test "TypeScript 定义检查" "[ -f pkg/excel_exporter.d.ts ]"
 
     # 检查包大小
-    WASM_SIZE=$(stat -f%z pkg/wasm_excel_exporter_bg.wasm)
+    WASM_SIZE=$(stat -f%z pkg/excel_exporter_bg.wasm)
     if [ "$WASM_SIZE" -gt 100000 ]; then
         echo -e "${YELLOW}⚠️  警告: WebAssembly 文件大小 ${WASM_SIZE} bytes ($((WASM_SIZE/1024)) KB) - 超过 100KB${NC}"
     else
@@ -122,7 +122,7 @@ cat > /tmp/wasm_test.html << 'EOF'
             export_table_to_csv_with_progress,
             export_table_to_csv_batch,
             export_table_to_excel
-        } from './pkg/wasm_excel_exporter.js';
+        } from './pkg/excel_exporter.js';
 
         async function testExport() {
             try {
@@ -158,7 +158,7 @@ echo -e "${YELLOW}⚡ 性能基准测试:${NC}"
 
 # 创建性能测试数据
 PERF_TEST_DATA=$(cat << 'EOF'
-import init, { export_table_to_csv } from './pkg/wasm_excel_exporter.js';
+import init, { export_table_to_csv } from './pkg/excel_exporter.js';
 
 async function performanceTest() {
     await init();
@@ -202,8 +202,8 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 
 console.log('📊 性能测试结果:');
-console.log('  包大小: ' + (fs.statSync('pkg/wasm_excel_exporter_bg.wasm').size / 1024).toFixed(2) + ' KB');
-console.log('  JavaScript 包大小: ' + (fs.statSync('pkg/wasm_excel_exporter.js').size / 1024).toFixed(2) + ' KB');
+console.log('  包大小: ' + (fs.statSync('pkg/excel_exporter_bg.wasm').size / 1024).toFixed(2) + ' KB');
+console.log('  JavaScript 包大小: ' + (fs.statSync('pkg/excel_exporter.js').size / 1024).toFixed(2) + ' KB');
 console.log('  模块数量: ' + Object.keys(require('./pkg/package.json').dependencies || {}).length);
 
 // 内存使用测试
@@ -322,7 +322,7 @@ cat > test_report.html << EOF
     <div class="header">
         <h2>📝 详细输出</h2>
         <p>请查看控制台输出获取详细的测试信息。</p>
-        <p>WebAssembly 文件大小: $(stat -f%z pkg/wasm_excel_exporter_bg.wasm 2>/dev/null || echo 'N/A') bytes</p>
+        <p>WebAssembly 文件大小: $(stat -f%z pkg/excel_exporter_bg.wasm 2>/dev/null || echo 'N/A') bytes</p>
     </div>
 </body>
 </html>

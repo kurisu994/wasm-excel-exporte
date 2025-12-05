@@ -16,9 +16,9 @@ if (!fs.existsSync(pkgPath)) {
 
 // 检查必要文件
 const requiredFiles = [
-    'wasm_excel_exporter.js',
-    'wasm_excel_exporter_bg.wasm',
-    'wasm_excel_exporter.d.ts',
+    'excel_exporter.js',
+    'excel_exporter_bg.wasm',
+    'excel_exporter.d.ts',
     'package.json'
 ];
 
@@ -42,7 +42,7 @@ console.log(`   版本: ${packageJson.version}`);
 console.log(`   类型: ${packageJson.type}`);
 
 // 检查 TypeScript 定义
-const typesPath = path.join(pkgPath, 'wasm_excel_exporter.d.ts');
+const typesPath = path.join(pkgPath, 'excel_exporter.d.ts');
 const typesContent = fs.readFileSync(typesPath, 'utf8');
 
 const hasExportFunction = typesContent.includes('export function export_table_to_csv');
@@ -57,7 +57,7 @@ console.log(`   ✅ 分批导出函数: ${hasBatchFunction ? '存在' : '缺失'
 console.log(`   ✅ 向后兼容函数: ${hasDeprecatedFunction ? '存在' : '缺失'}`);
 
 // 检查 WASM 文件大小
-const wasmPath = path.join(pkgPath, 'wasm_excel_exporter_bg.wasm');
+const wasmPath = path.join(pkgPath, 'excel_exporter_bg.wasm');
 const wasmStats = fs.statSync(wasmPath);
 const wasmSizeKB = (wasmStats.size / 1024).toFixed(2);
 
@@ -71,7 +71,7 @@ if (wasmSizeKB > 100) {
 }
 
 // 检查 JavaScript 包
-const jsPath = path.join(pkgPath, 'wasm_excel_exporter.js');
+const jsPath = path.join(pkgPath, 'excel_exporter.js');
 const jsContent = fs.readFileSync(jsPath, 'utf8');
 
 console.log('📜 JavaScript 包检查:');
@@ -112,7 +112,7 @@ import init, {
     export_table_to_csv,
     export_table_to_csv_with_progress,
     export_table_to_csv_batch
-} from './pkg/wasm_excel_exporter.js';
+} from './pkg/excel_exporter.js';
 
 await init();
 
