@@ -1,0 +1,315 @@
+---
+trigger: always_on
+---
+
+# project_rules.md
+
+> **AI 助手项目规则** - `excel-exporter` 核心约束和代码修改指南
+
+---
+
+## 核心约束（必须遵守）
+
+### 1. 模块化原则
+
+**不得破坏现有架构**：
+
+```
+src/
+├── lib.rs              # 仅做模块声明和重导出
+├── validation.rs       # 文件名验证
+├── resource.rs         # 资源管理（RAII）
+├── core.rs             # 同步导出
+├── batch_export.rs     # 异步分批导出
+└── utils.rs            # 调试工具
+```
+
+**禁止**：
+
+- ❌ 在 `lib.rs` 中添加业务逻辑
+- ❌ 跨模块混合职责
+- ❌ 绕过模块边界访问内部实现
+
+### 2. 安全优先
+
+**所有用户输入必须验证**：
+
+```rust
+// ✅ 正确
+let filename = validate_filename(&user_input)?;
+
+// ❌ 错误
+let filename = user_input; // 危险！
+```
+
+**强制要求**：
+
+- ✅ 文件名必须通过 `validate_filename()`
+- ✅ DOM 操作必须检查返回值
+- ✅ 使用 `Result<T, JsValue>` 而非 `panic!`
+
+### 3. RAII 资源管理
+
+```rust
+// ✅ 正确：自动管理
+let _url_guard = UrlGuard::new(&url);
+
+// ❌ 错误：手动管理（异常时泄漏）
+let url = create_object_url();
+Url::revoke_object_url(&url);
+```
+
+### 4. 零拷贝原则
+
+```rust
+// ✅ 正确
+fn process_data(data: &str) { }
+
+// ❌ 错误
+fn process_data(data: String) { }
+```
+
+### 5. 中文错误消息
+
+```rust
+// ✅ 正确
+.map_err(|e| JsValue::from_str(&format!("获取表格失败: {}", e)))?
+
+// ❌ 错误
+.map_err(|e| JsValue::from(e))?
+```
+
+---
+
+## 📋 代码修改规则
+
+### 添加新功能
+
+1. **确定模块**：导出功能 → `core.rs`/`batch_export.rs`，验证 → `validation.rs`
+2. **编写函数**：
+   ```rust
+   /// 函数说明（中文）
+   ///
+   /// # 参数
+   /// * `param` - 参数说明
+   ///
+   /// # 返回值
+   /// * `Ok(T)` - 成功
+   /// * `Err(JsValue)` - 失败，包含错误信息
+   #[wasm_bindgen]
+   pub fn new_function(param: &str) -> Result<(), JsValue> {
+       // 实现
+   }
+   ```
+3. **在 `lib.rs` 重导出**：`pub use module::new_function;`
+4. **添加测试**
+
+### 修改现有函数
+
+**检查清单**：
+
+- [ ] 是否破坏向后兼容？需要 `#[deprecated]`
+- [ ] 是否修改签名？更新所有调用点
+- [ ] 是否影响其他模块？测试相关模块
+- [ ] 文档注释是否更新？
+
+### 优化性能
+
+**允许**：
+
+- ✅ 使用引用 `&str` / `&[T]`
+- ✅ 预分配容量 `Vec::with_capacity()`
+- ✅ 分批处理 + `yield_to_browser()`
+
+**禁止**：
+
+- ❌ 使用 `unsafe`（除非必要）
+- ❌ 牺牲可读性
+- ❌ 绕过安全检查
+
+---
+
+## ✅ 测试要求
+
+**每次修改后必须**：
+
+```bash
+# 1. 运行测试
+cargo test --lib
+
+# 2. 检查警告
+cargo clippy -- -D warnings
+
+# 3. 格式化
+cargo fmt
+```
+
+**测试命名**：
+
+```rust
+#[test]
+fn test_<模块>_<函数>_<场景>() { }
+```
+
+**必须测试**：
+
+- ✅ 正常输入
+- ✅ 边界值
+- ✅ 非法输入
+- ✅ Unicode
+- ✅ 大数据
+
+---
+
+## ⚠️ 常见错误
+
+### 1. 忘记验证输入
+
+```rust
+// ❌ 错误
+pub fn export(filename: String) { }
+
+// ✅ 正确
+pub fn export(filename: String) -> Result<(), JsValue> {
+    validate_filename(&filename).map_err(|e| JsValue::from_str(&e))?;
+}
+```
+
+### 2. 资源泄漏
+
+```rust
+// ❌ 错误：异常时泄漏
+let url = Url::create_object_url(&blob)?;
+do_something()?;
+Url::revoke_object_url(&url)?;
+
+// ✅ 正确：自动清理
+let _guard = UrlGuard::new(&url);
+do_something()?;
+```
+
+### 3. 跨模块混淆
+
+```rust
+// ❌ 错误：在 validation.rs 中操作 DOM
+pub fn validate_and_export() { }
+
+// ✅ 正确：职责分离
+// validation.rs
+pub fn validate_filename(name: &str) -> Result<(), String> { }
+
+// core.rs
+pub fn export(...) {
+    validate_filename(&filename)?;
+}
+```
+
+### 4. 使用 panic!
+
+```rust
+// ❌ 错误
+if data.is_empty() { panic!("数据为空"); }
+
+// ✅ 正确
+if data.is_empty() {
+    return Err(JsValue::from_str("数据不能为空"));
+}
+```
+
+### 5. 英文错误
+
+```rust
+// ❌ 错误
+Err(JsValue::from_str("File not found"))
+
+// ✅ 正确
+Err(JsValue::from_str("未找到文件"))
+```
+
+---
+
+## 📝 文档规范
+
+### 函数文档（必须）
+
+```rust
+/// 简短描述
+///
+/// # 参数
+/// * `param` - 说明
+///
+/// # 返回值
+/// * `Ok(T)` - 成功
+/// * `Err(JsValue)` - 失败
+#[wasm_bindgen]
+pub fn function_name(param: &str) -> Result<(), JsValue>
+```
+
+### 模块文档（必须）
+
+```rust
+/// 模块名称
+///
+/// 模块职责说明
+```
+
+---
+
+## 🔧 修改前检查清单
+
+**功能性**：
+
+- [ ] 实现预期功能
+- [ ] 处理边界情况
+- [ ] 错误处理完整（中文）
+
+**安全性**：
+
+- [ ] 验证所有输入
+- [ ] 使用 RAII 管理资源
+- [ ] 无 `panic!` / `unwrap()`
+
+**架构**：
+
+- [ ] 遵循模块化
+- [ ] 未破坏抽象
+- [ ] 依赖清晰
+
+**测试**：
+
+- [ ] 添加测试
+- [ ] `cargo test --lib` 通过
+- [ ] `cargo clippy` 无警告
+- [ ] `cargo fmt` 已执行
+
+**文档**：
+
+- [ ] 函数文档（中文）
+- [ ] 模块文档更新
+- [ ] 复杂逻辑注释
+
+---
+
+## 🎯 关键设计原则
+
+1. **简洁至上**：最简单的解决方案
+2. **安全第一**：验证输入、优雅错误处理
+3. **用户体验**：中文消息、进度反馈
+4. **可维护性**：模块化、文档完整
+
+---
+
+## 🔗 快速参考
+
+### 技术栈
+
+- Rust Edition 2024
+- WebAssembly (wasm32-unknown-unknown)
+- wasm-bindgen, web-sys, csv
+
+### 重要路径
+
+- 核心逻辑: `src/core.rs`, `src/batch_export.rs`
+- 验证: `src/validation.rs`
+- 资源管理: `src/resource.rs`
+- 测试: `tests/lib_tests.rs`
