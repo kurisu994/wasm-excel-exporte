@@ -2,8 +2,8 @@
 //!
 //! 这个模块包含了所有核心功能的单元测试，旨在达到 100% 代码覆盖率
 
-use excel_exporter::{validate_filename, ensure_extension};
 use csv::Writer;
+use excel_exporter::{ensure_extension, validate_filename};
 use std::io::Cursor;
 
 // ============================================================================
@@ -30,7 +30,11 @@ fn test_filename_extension_handling_basic() {
             format!("{}.csv", input)
         };
 
-        assert_eq!(result, expected, "文件名处理失败: 输入={}, 期望={}", input, expected);
+        assert_eq!(
+            result, expected,
+            "文件名处理失败: 输入={}, 期望={}",
+            input, expected
+        );
     }
 }
 
@@ -55,7 +59,11 @@ fn test_filename_extension_handling_unicode() {
             format!("{}.csv", input)
         };
 
-        assert_eq!(result, expected, "Unicode 文件名处理失败: 输入={}, 期望={}", input, expected);
+        assert_eq!(
+            result, expected,
+            "Unicode 文件名处理失败: 输入={}, 期望={}",
+            input, expected
+        );
     }
 }
 
@@ -63,11 +71,11 @@ fn test_filename_extension_handling_unicode() {
 fn test_filename_extension_handling_special_cases() {
     // 测试特殊情况
     let test_cases = vec![
-        ("file.txt", "file.txt.csv"), // 其他扩展名
+        ("file.txt", "file.txt.csv"),         // 其他扩展名
         ("file.csv.bak", "file.csv.bak.csv"), // 多个点
-        (".csv", ".csv"), // 只有扩展名
-        ("file.", "file..csv"), // 以点结尾
-        ("file..csv", "file..csv"), // 双点
+        (".csv", ".csv"),                     // 只有扩展名
+        ("file.", "file..csv"),               // 以点结尾
+        ("file..csv", "file..csv"),           // 双点
     ];
 
     for (input, expected) in test_cases {
@@ -79,7 +87,11 @@ fn test_filename_extension_handling_special_cases() {
             format!("{}.csv", input)
         };
 
-        assert_eq!(result, expected, "特殊情况处理失败: 输入={}, 期望={}", input, expected);
+        assert_eq!(
+            result, expected,
+            "特殊情况处理失败: 输入={}, 期望={}",
+            input, expected
+        );
     }
 }
 
@@ -192,7 +204,10 @@ fn test_csv_writer_empty_data() {
     assert!(wtr.flush().is_ok(), "即使没有写入数据，刷新也应该成功");
 
     let csv_data = wtr.into_inner().unwrap();
-    assert!(csv_data.get_ref().is_empty(), "未写入任何数据时 CSV 应该为空");
+    assert!(
+        csv_data.get_ref().is_empty(),
+        "未写入任何数据时 CSV 应该为空"
+    );
 }
 
 #[test]
@@ -201,7 +216,10 @@ fn test_csv_writer_unicode_data() {
     let mut wtr = Writer::from_writer(Cursor::new(Vec::new()));
     let test_data = vec!["姓名", "年龄", "城市", "日本語", "한국어"];
 
-    assert!(wtr.write_record(&test_data).is_ok(), "写入 Unicode 数据应该成功");
+    assert!(
+        wtr.write_record(&test_data).is_ok(),
+        "写入 Unicode 数据应该成功"
+    );
     assert!(wtr.flush().is_ok(), "刷新应该成功");
 
     let csv_data = wtr.into_inner().unwrap();
@@ -222,11 +240,17 @@ fn test_csv_writer_special_characters() {
         "field\twith\ttabs",
     ];
 
-    assert!(wtr.write_record(&test_data).is_ok(), "写入包含特殊字符的数据应该成功");
+    assert!(
+        wtr.write_record(&test_data).is_ok(),
+        "写入包含特殊字符的数据应该成功"
+    );
     assert!(wtr.flush().is_ok(), "刷新应该成功");
 
     let csv_data = wtr.into_inner().unwrap();
-    assert!(!csv_data.get_ref().is_empty(), "包含特殊字符的 CSV 数据不应该为空");
+    assert!(
+        !csv_data.get_ref().is_empty(),
+        "包含特殊字符的 CSV 数据不应该为空"
+    );
 }
 
 // ============================================================================
@@ -281,39 +305,74 @@ fn test_filename_validation_empty() {
 #[test]
 fn test_filename_validation_path_separators() {
     // 测试包含路径分隔符的文件名
-    assert!(validate_filename("path/to/file").is_err(), "包含 / 应该被拒绝");
-    assert!(validate_filename("path\\to\\file").is_err(), "包含 \\ 应该被拒绝");
+    assert!(
+        validate_filename("path/to/file").is_err(),
+        "包含 / 应该被拒绝"
+    );
+    assert!(
+        validate_filename("path\\to\\file").is_err(),
+        "包含 \\ 应该被拒绝"
+    );
     assert!(validate_filename("../file").is_err(), "包含 ../ 应该被拒绝");
-    assert!(validate_filename("..\\file").is_err(), "包含 ..\\ 应该被拒绝");
+    assert!(
+        validate_filename("..\\file").is_err(),
+        "包含 ..\\ 应该被拒绝"
+    );
 }
 
 #[test]
 fn test_filename_validation_dangerous_chars() {
     // 测试危险字符
-    assert!(validate_filename("invalid<name").is_err(), "包含 < 应该被拒绝");
-    assert!(validate_filename("invalid>name").is_err(), "包含 > 应该被拒绝");
-    assert!(validate_filename("invalid:name").is_err(), "包含 : 应该被拒绝");
-    assert!(validate_filename("invalid\"name").is_err(), "包含 \" 应该被拒绝");
-    assert!(validate_filename("invalid|name").is_err(), "包含 | 应该被拒绝");
-    assert!(validate_filename("invalid?name").is_err(), "包含 ? 应该被拒绝");
-    assert!(validate_filename("invalid*name").is_err(), "包含 * 应该被拒绝");
+    assert!(
+        validate_filename("invalid<name").is_err(),
+        "包含 < 应该被拒绝"
+    );
+    assert!(
+        validate_filename("invalid>name").is_err(),
+        "包含 > 应该被拒绝"
+    );
+    assert!(
+        validate_filename("invalid:name").is_err(),
+        "包含 : 应该被拒绝"
+    );
+    assert!(
+        validate_filename("invalid\"name").is_err(),
+        "包含 \" 应该被拒绝"
+    );
+    assert!(
+        validate_filename("invalid|name").is_err(),
+        "包含 | 应该被拒绝"
+    );
+    assert!(
+        validate_filename("invalid?name").is_err(),
+        "包含 ? 应该被拒绝"
+    );
+    assert!(
+        validate_filename("invalid*name").is_err(),
+        "包含 * 应该被拒绝"
+    );
 }
 
 #[test]
 fn test_filename_validation_windows_reserved_names() {
     // 测试 Windows 保留名称
     let reserved_names = vec![
-        "CON", "PRN", "AUX", "NUL",
-        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+        "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
     ];
 
     for name in reserved_names {
         assert!(validate_filename(name).is_err(), "{} 应该被拒绝", name);
-        assert!(validate_filename(&format!("{}.csv", name)).is_err(),
-                "{}.csv 应该被拒绝", name);
-        assert!(validate_filename(&name.to_lowercase()).is_err(),
-                "{} (小写) 应该被拒绝", name);
+        assert!(
+            validate_filename(&format!("{}.csv", name)).is_err(),
+            "{}.csv 应该被拒绝",
+            name
+        );
+        assert!(
+            validate_filename(&name.to_lowercase()).is_err(),
+            "{} (小写) 应该被拒绝",
+            name
+        );
     }
 }
 
@@ -321,14 +380,23 @@ fn test_filename_validation_windows_reserved_names() {
 fn test_filename_validation_starts_with_dot() {
     // 测试以点开头的文件名
     assert!(validate_filename(".hidden").is_err(), "以点开头应该被拒绝");
-    assert!(validate_filename(".gitignore").is_err(), ".gitignore 应该被拒绝");
-    assert!(validate_filename(".file.csv").is_err(), ".file.csv 应该被拒绝");
+    assert!(
+        validate_filename(".gitignore").is_err(),
+        ".gitignore 应该被拒绝"
+    );
+    assert!(
+        validate_filename(".file.csv").is_err(),
+        ".file.csv 应该被拒绝"
+    );
 }
 
 #[test]
 fn test_filename_validation_ends_with_dot() {
     // 测试以点结尾的文件名
-    assert!(validate_filename("trailing.").is_err(), "以点结尾应该被拒绝");
+    assert!(
+        validate_filename("trailing.").is_err(),
+        "以点结尾应该被拒绝"
+    );
     assert!(validate_filename("file..").is_err(), "以双点结尾应该被拒绝");
 }
 
@@ -336,27 +404,42 @@ fn test_filename_validation_ends_with_dot() {
 fn test_filename_validation_starts_with_space() {
     // 测试以空格开头的文件名
     assert!(validate_filename(" space").is_err(), "以空格开头应该被拒绝");
-    assert!(validate_filename("  spaces").is_err(), "以多个空格开头应该被拒绝");
+    assert!(
+        validate_filename("  spaces").is_err(),
+        "以多个空格开头应该被拒绝"
+    );
 }
 
 #[test]
 fn test_filename_validation_ends_with_space() {
     // 测试以空格结尾的文件名
     assert!(validate_filename("space ").is_err(), "以空格结尾应该被拒绝");
-    assert!(validate_filename("spaces  ").is_err(), "以多个空格结尾应该被拒绝");
+    assert!(
+        validate_filename("spaces  ").is_err(),
+        "以多个空格结尾应该被拒绝"
+    );
 }
 
 #[test]
 fn test_filename_validation_too_long() {
     // 测试过长的文件名
     let long_name = "a".repeat(256);
-    assert!(validate_filename(&long_name).is_err(), "256 字符的文件名应该被拒绝");
+    assert!(
+        validate_filename(&long_name).is_err(),
+        "256 字符的文件名应该被拒绝"
+    );
 
     let very_long_name = "a".repeat(1000);
-    assert!(validate_filename(&very_long_name).is_err(), "1000 字符的文件名应该被拒绝");
+    assert!(
+        validate_filename(&very_long_name).is_err(),
+        "1000 字符的文件名应该被拒绝"
+    );
 
     let exactly_255 = "a".repeat(255);
-    assert!(validate_filename(&exactly_255).is_ok(), "255 字符的文件名应该被接受");
+    assert!(
+        validate_filename(&exactly_255).is_ok(),
+        "255 字符的文件名应该被接受"
+    );
 }
 
 // ============================================================================
@@ -422,8 +505,14 @@ fn test_filename_validation_edge_length() {
 fn test_filename_validation_mixed_valid_invalid() {
     // 测试混合有效和无效字符
     assert!(validate_filename("valid-name").is_ok(), "有效名称应该通过");
-    assert!(validate_filename("valid/invalid").is_err(), "混合有效和无效应该被拒绝");
-    assert!(validate_filename("valid<invalid").is_err(), "混合有效和无效应该被拒绝");
+    assert!(
+        validate_filename("valid/invalid").is_err(),
+        "混合有效和无效应该被拒绝"
+    );
+    assert!(
+        validate_filename("valid<invalid").is_err(),
+        "混合有效和无效应该被拒绝"
+    );
 }
 
 // ============================================================================
@@ -441,8 +530,14 @@ fn test_regression_empty_csv_writer() {
 #[test]
 fn test_regression_unicode_in_validation() {
     // 回归测试：确保 Unicode 字符在验证中正常工作
-    assert!(validate_filename("中文文件名").is_ok(), "中文文件名应该有效");
-    assert!(validate_filename("中文/路径").is_err(), "包含路径分隔符的中文应该被拒绝");
+    assert!(
+        validate_filename("中文文件名").is_ok(),
+        "中文文件名应该有效"
+    );
+    assert!(
+        validate_filename("中文/路径").is_err(),
+        "包含路径分隔符的中文应该被拒绝"
+    );
 }
 
 #[test]
@@ -464,4 +559,3 @@ fn test_regression_case_sensitivity() {
         assert_eq!(result, expected, "大小写处理应该正确");
     }
 }
-

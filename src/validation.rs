@@ -1,7 +1,7 @@
 /// 文件名验证模块
 ///
 /// 提供安全的文件名验证功能，防止路径遍历和非法文件名攻击
-
+///
 /// 验证文件名是否安全合法
 ///
 /// # 参数
@@ -41,9 +41,8 @@ pub fn validate_filename(filename: &str) -> Result<(), String> {
     // 检查 Windows 保留文件名
     let base_name = filename.split('.').next().unwrap_or("");
     let reserved_names = [
-        "CON", "PRN", "AUX", "NUL",
-        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+        "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+        "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
     ];
 
     if reserved_names.contains(&base_name.to_uppercase().as_str()) {
@@ -51,8 +50,11 @@ pub fn validate_filename(filename: &str) -> Result<(), String> {
     }
 
     // 检查文件名是否以点或空格开头/结尾（Windows 不支持）
-    if filename.starts_with('.') || filename.starts_with(' ')
-        || filename.ends_with('.') || filename.ends_with(' ') {
+    if filename.starts_with('.')
+        || filename.starts_with(' ')
+        || filename.ends_with('.')
+        || filename.ends_with(' ')
+    {
         return Err("文件名不能以点或空格开头或结尾".to_string());
     }
 
@@ -68,7 +70,10 @@ pub fn validate_filename(filename: &str) -> Result<(), String> {
 /// # 返回值
 /// 返回带有正确扩展名的文件名
 pub fn ensure_extension(filename: &str, extension: &str) -> String {
-    if filename.to_lowercase().ends_with(&format!(".{}", extension.to_lowercase())) {
+    if filename
+        .to_lowercase()
+        .ends_with(&format!(".{}", extension.to_lowercase()))
+    {
         filename.to_string()
     } else {
         format!("{}.{}", filename, extension)

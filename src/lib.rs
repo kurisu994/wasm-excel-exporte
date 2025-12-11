@@ -1,8 +1,8 @@
+mod batch_export;
+mod core;
+mod resource;
 mod utils;
 mod validation;
-mod resource;
-mod core;
-mod batch_export;
 
 // 使用 `wee_alloc` 作为全局分配器以减小 WASM 文件大小
 #[cfg(feature = "wee_alloc")]
@@ -10,13 +10,13 @@ mod batch_export;
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 // 重新导出所有公共 API
-pub use validation::{validate_filename, ensure_extension};
+pub use validation::{ensure_extension, validate_filename};
 
-pub use core::{
-    export_table_to_csv,
-    export_table_to_csv_with_progress,
-    export_table_to_excel,
-};
+pub use core::{export_table_to_csv, export_table_to_csv_with_progress};
+
+// 向后兼容：导出已弃用的函数
+#[allow(deprecated)]
+pub use core::export_table_to_excel;
 
 pub use batch_export::export_table_to_csv_batch;
 

@@ -1,14 +1,15 @@
 /// 核心导出功能模块
 ///
 /// 提供基本的 HTML 表格到 CSV 的导出功能
-
 use crate::resource::UrlGuard;
 use crate::validation::{ensure_extension, validate_filename};
 use csv::Writer;
 use std::io::Cursor;
-use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{Blob, HtmlAnchorElement, HtmlTableCellElement, HtmlTableElement, HtmlTableRowElement, Url};
+use wasm_bindgen::prelude::*;
+use web_sys::{
+    Blob, HtmlAnchorElement, HtmlTableCellElement, HtmlTableElement, HtmlTableRowElement, Url,
+};
 
 /// 安全地导出 HTML 表格到 CSV 文件
 ///
@@ -27,16 +28,18 @@ pub fn export_table_to_csv(table_id: &str, filename: Option<String>) -> Result<(
     }
 
     // 安全地获取全局的 window 和 document 对象
-    let window = web_sys::window()
-        .ok_or_else(|| JsValue::from_str("无法获取 window 对象"))?;
-    let document = window.document()
+    let window = web_sys::window().ok_or_else(|| JsValue::from_str("无法获取 window 对象"))?;
+    let document = window
+        .document()
         .ok_or_else(|| JsValue::from_str("无法获取 document 对象"))?;
 
     // 根据 table_id 获取 table 元素，并进行类型检查
-    let table_element = document.get_element_by_id(table_id)
+    let table_element = document
+        .get_element_by_id(table_id)
         .ok_or_else(|| JsValue::from_str(&format!("找不到 ID 为 '{}' 的表格元素", table_id)))?;
 
-    let table = table_element.dyn_into::<HtmlTableElement>()
+    let table = table_element
+        .dyn_into::<HtmlTableElement>()
         .map_err(|_| JsValue::from_str(&format!("元素 '{}' 不是有效的 HTML 表格", table_id)))?;
 
     // 创建一个 CSV 写入器
@@ -51,10 +54,12 @@ pub fn export_table_to_csv(table_id: &str, filename: Option<String>) -> Result<(
     }
 
     for i in 0..row_count {
-        let row = rows.get_with_index(i)
+        let row = rows
+            .get_with_index(i)
             .ok_or_else(|| JsValue::from_str(&format!("无法获取第 {} 行数据", i + 1)))?;
 
-        let row = row.dyn_into::<HtmlTableRowElement>()
+        let row = row
+            .dyn_into::<HtmlTableRowElement>()
             .map_err(|_| JsValue::from_str(&format!("第 {} 行不是有效的表格行", i + 1)))?;
 
         let mut row_data = Vec::new();
@@ -63,11 +68,17 @@ pub fn export_table_to_csv(table_id: &str, filename: Option<String>) -> Result<(
         let cell_count = cells.length();
 
         for j in 0..cell_count {
-            let cell = cells.get_with_index(j)
-                .ok_or_else(|| JsValue::from_str(&format!("无法获取第 {} 行第 {} 列单元格", i + 1, j + 1)))?;
+            let cell = cells.get_with_index(j).ok_or_else(|| {
+                JsValue::from_str(&format!("无法获取第 {} 行第 {} 列单元格", i + 1, j + 1))
+            })?;
 
-            let cell = cell.dyn_into::<HtmlTableCellElement>()
-                .map_err(|_| JsValue::from_str(&format!("第 {} 行第 {} 列不是有效的表格单元格", i + 1, j + 1)))?;
+            let cell = cell.dyn_into::<HtmlTableCellElement>().map_err(|_| {
+                JsValue::from_str(&format!(
+                    "第 {} 行第 {} 列不是有效的表格单元格",
+                    i + 1,
+                    j + 1
+                ))
+            })?;
 
             let cell_text = cell.inner_text();
             row_data.push(cell_text);
@@ -83,7 +94,8 @@ pub fn export_table_to_csv(table_id: &str, filename: Option<String>) -> Result<(
         .map_err(|e| JsValue::from_str(&format!("完成 CSV 写入失败: {}", e)))?;
 
     // 获取 CSV 数据
-    let csv_data = wtr.into_inner()
+    let csv_data = wtr
+        .into_inner()
         .map_err(|e| JsValue::from_str(&format!("获取 CSV 数据失败: {}", e)))?;
 
     if csv_data.get_ref().is_empty() {
@@ -115,9 +127,11 @@ pub fn export_table_to_csv(table_id: &str, filename: Option<String>) -> Result<(
 
     let final_filename = ensure_extension(&final_filename, "csv");
 
-    let anchor = document.create_element("a")
+    let anchor = document
+        .create_element("a")
         .map_err(|e| JsValue::from_str(&format!("创建下载链接元素失败: {:?}", e)))?;
-    let anchor = anchor.dyn_into::<HtmlAnchorElement>()
+    let anchor = anchor
+        .dyn_into::<HtmlAnchorElement>()
         .map_err(|_| JsValue::from_str("创建的元素不是有效的锚点元素"))?;
 
     anchor.set_href(&url);
@@ -153,16 +167,18 @@ pub fn export_table_to_csv_with_progress(
     }
 
     // 安全地获取全局的 window 和 document 对象
-    let window = web_sys::window()
-        .ok_or_else(|| JsValue::from_str("无法获取 window 对象"))?;
-    let document = window.document()
+    let window = web_sys::window().ok_or_else(|| JsValue::from_str("无法获取 window 对象"))?;
+    let document = window
+        .document()
         .ok_or_else(|| JsValue::from_str("无法获取 document 对象"))?;
 
     // 根据 table_id 获取 table 元素，并进行类型检查
-    let table_element = document.get_element_by_id(table_id)
+    let table_element = document
+        .get_element_by_id(table_id)
         .ok_or_else(|| JsValue::from_str(&format!("找不到 ID 为 '{}' 的表格元素", table_id)))?;
 
-    let table = table_element.dyn_into::<HtmlTableElement>()
+    let table = table_element
+        .dyn_into::<HtmlTableElement>()
         .map_err(|_| JsValue::from_str(&format!("元素 '{}' 不是有效的 HTML 表格", table_id)))?;
 
     // 创建一个 CSV 写入器
@@ -182,10 +198,12 @@ pub fn export_table_to_csv_with_progress(
     }
 
     for i in 0..row_count {
-        let row = rows.get_with_index(i)
+        let row = rows
+            .get_with_index(i)
             .ok_or_else(|| JsValue::from_str(&format!("无法获取第 {} 行数据", i + 1)))?;
 
-        let row = row.dyn_into::<HtmlTableRowElement>()
+        let row = row
+            .dyn_into::<HtmlTableRowElement>()
             .map_err(|_| JsValue::from_str(&format!("第 {} 行不是有效的表格行", i + 1)))?;
 
         let mut row_data = Vec::new();
@@ -194,11 +212,17 @@ pub fn export_table_to_csv_with_progress(
         let cell_count = cells.length();
 
         for j in 0..cell_count {
-            let cell = cells.get_with_index(j)
-                .ok_or_else(|| JsValue::from_str(&format!("无法获取第 {} 行第 {} 列单元格", i + 1, j + 1)))?;
+            let cell = cells.get_with_index(j).ok_or_else(|| {
+                JsValue::from_str(&format!("无法获取第 {} 行第 {} 列单元格", i + 1, j + 1))
+            })?;
 
-            let cell = cell.dyn_into::<HtmlTableCellElement>()
-                .map_err(|_| JsValue::from_str(&format!("第 {} 行第 {} 列不是有效的表格单元格", i + 1, j + 1)))?;
+            let cell = cell.dyn_into::<HtmlTableCellElement>().map_err(|_| {
+                JsValue::from_str(&format!(
+                    "第 {} 行第 {} 列不是有效的表格单元格",
+                    i + 1,
+                    j + 1
+                ))
+            })?;
 
             let cell_text = cell.inner_text();
             row_data.push(cell_text);
@@ -220,7 +244,8 @@ pub fn export_table_to_csv_with_progress(
         .map_err(|e| JsValue::from_str(&format!("完成 CSV 写入失败: {}", e)))?;
 
     // 获取 CSV 数据
-    let csv_data = wtr.into_inner()
+    let csv_data = wtr
+        .into_inner()
         .map_err(|e| JsValue::from_str(&format!("获取 CSV 数据失败: {}", e)))?;
 
     if csv_data.get_ref().is_empty() {
@@ -252,9 +277,11 @@ pub fn export_table_to_csv_with_progress(
 
     let final_filename = ensure_extension(&final_filename, "csv");
 
-    let anchor = document.create_element("a")
+    let anchor = document
+        .create_element("a")
         .map_err(|e| JsValue::from_str(&format!("创建下载链接元素失败: {:?}", e)))?;
-    let anchor = anchor.dyn_into::<HtmlAnchorElement>()
+    let anchor = anchor
+        .dyn_into::<HtmlAnchorElement>()
         .map_err(|_| JsValue::from_str("创建的元素不是有效的锚点元素"))?;
 
     anchor.set_href(&url);
@@ -274,7 +301,7 @@ pub fn export_table_to_csv_with_progress(
 /// 请使用 `export_table_to_csv` 函数替代
 #[wasm_bindgen]
 #[deprecated(note = "请使用 export_table_to_csv(table_id, filename) 替代")]
-#[allow(deprecated)]  // 允许调用主函数，避免递归弃用警告
+#[allow(deprecated)] // 允许调用主函数，避免递归弃用警告
 pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue> {
     export_table_to_csv(table_id, None)
 }

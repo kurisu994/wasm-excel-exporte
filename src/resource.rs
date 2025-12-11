@@ -1,7 +1,6 @@
 /// 资源管理模块
 ///
 /// 提供 RAII 风格的资源管理，确保 Web 资源的正确释放
-
 use web_sys::Url;
 
 /// RAII 风格的 URL 资源管理器
@@ -20,7 +19,9 @@ impl UrlGuard {
     /// # 返回值
     /// 返回 UrlGuard 实例
     pub fn new(url: &str) -> Self {
-        Self { url: url.to_string() }
+        Self {
+            url: url.to_string(),
+        }
     }
 }
 
