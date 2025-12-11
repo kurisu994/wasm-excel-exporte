@@ -81,10 +81,11 @@ pub async fn export_table_to_csv_batch(
     let mut tbody_row_count = 0;
 
     if let Some(tid) = tbody_id
-        && !tid.is_empty() {
-        let tbody_element = document.get_element_by_id(&tid).ok_or_else(|| {
-            JsValue::from_str(&format!("找不到 ID 为 '{}' 的 tbody 元素", tid))
-        })?;
+        && !tid.is_empty()
+    {
+        let tbody_element = document
+            .get_element_by_id(&tid)
+            .ok_or_else(|| JsValue::from_str(&format!("找不到 ID 为 '{}' 的 tbody 元素", tid)))?;
 
         // 尝试转换为 HtmlTableSectionElement (tbody)
         let tbody = tbody_element
