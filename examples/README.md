@@ -1,6 +1,6 @@
-# 📚 excel-exporter 使用示例
+# 📚 belobog-stellar-grid 使用示例
 
-这个目录包含了 excel-exporter 的完整使用示例。每个示例都是一个独立的 HTML 文件，展示了库的不同功能。
+这个目录包含了 belobog-stellar-grid 的完整使用示例。每个示例都是一个独立的 HTML 文件，展示了库的不同功能。
 
 ## 🚀 快速开始
 
@@ -48,7 +48,7 @@ npx http-server .
 
 **关键代码**：
 ```javascript
-import init, { export_table_to_csv } from '../pkg/excel_exporter.js';
+import init, { export_table_to_csv } from '../pkg/belobog_stellar_grid.js';
 
 await init();
 export_table_to_csv('table-id', '文件名.csv');
@@ -70,7 +70,7 @@ export_table_to_csv('table-id', '文件名.csv');
 
 **关键代码**：
 ```javascript
-import init, { export_table_to_csv_with_progress } from '../pkg/excel_exporter.js';
+import init, { export_table_to_csv_with_progress } from '../pkg/belobog_stellar_grid.js';
 
 await init();
 export_table_to_csv_with_progress(
@@ -154,13 +154,13 @@ class VirtualScrollRenderer {
 
 1. **初始化 WASM 模块**
 ```javascript
-import init from '../pkg/excel_exporter.js';
+import init from '../pkg/belobog_stellar_grid.js';
 await init();
 ```
 
 2. **导出表格**
 ```javascript
-import { export_table_to_csv } from '../pkg/excel_exporter.js';
+import { export_table_to_csv } from '../pkg/belobog_stellar_grid.js';
 export_table_to_csv('your-table-id', '文件名');
 ```
 
@@ -177,7 +177,7 @@ try {
 
 #### 带进度回调
 ```javascript
-import { export_table_to_csv_with_progress } from '../pkg/excel_exporter.js';
+import { export_table_to_csv_with_progress } from '../pkg/belobog_stellar_grid.js';
 
 export_table_to_csv_with_progress(
     'large-table',
@@ -238,7 +238,7 @@ async function exportAll() {
 **解决方案**：
 1. 确保使用 HTTP 服务器（不是 file://）
 2. 检查 pkg/ 目录是否存在
-3. 确认路径正确（例如：`../pkg/excel_exporter.js`）
+3. 确认路径正确（例如：`../pkg/belobog_stellar_grid.js`）
 
 ### 问题：找不到表格元素
 **解决方案**：
@@ -339,6 +339,6 @@ const filename = `${reportType}_${date}.csv`;
 
 **需要帮助？**
 - 查看主项目 [README](../README.md)
-- 提交 [Issue](https://github.com/kurisu994/excel-exporter/issues)
+- 提交 [Issue](https://github.com/kurisu994/belobog-stellar-grid/issues)
 - 阅读 [API 文档](../EXAMPLES.md)
 

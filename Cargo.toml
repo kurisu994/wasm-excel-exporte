@@ -1,11 +1,11 @@
 [package]
-name = "excel-exporter"
-version = "2.0.0"
+name = "belobog-stellar-grid"
+version = "1.0.0"
 authors = ["Kurisu <makise_kurisuu@outlook.jp>"]
 edition = "2024"
 description = "一个安全高效的 WebAssembly 库，用于将 HTML 表格数据导出为 CSV 和 XLSX 文件"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/kurisu994/excel-exporter"
+repository = "https://github.com/kurisu994/belobog-stellar-grid"
 keywords = ["wasm", "csv", "xlsx", "export", "table"]
 categories = ["wasm", "web-programming", "encoding"]
 readme = "README.md"

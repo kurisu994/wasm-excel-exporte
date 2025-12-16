@@ -2,7 +2,7 @@
 //!
 //! 测试新的 export_table 函数
 
-use excel_exporter::{ExportFormat, export_table};
+use belobog_stellar_grid::ExportFormat;
 
 #[test]
 fn test_export_format_default() {

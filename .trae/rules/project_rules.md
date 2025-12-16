@@ -1,6 +1,6 @@
 # project_rules.md
 
-> **AI 助手项目规则** - `excel-exporter` 核心约束和代码修改指南
+> **AI 助手项目规则** - `belobog-stellar-grid` 核心约束和代码修改指南
 > 
 > **项目版本**：v1.2.1  
 > **Rust Edition**：2024  
@@ -156,7 +156,7 @@ if filename.is_empty() {
    ///
    /// # 示例
    /// ```javascript
-   /// import { new_function } from './pkg/excel_exporter.js';
+   /// import { new_function } from './pkg/belobog_stellar_grid.js';
    /// await new_function('value');
    /// ```
    #[wasm_bindgen]
@@ -426,7 +426,7 @@ cargo fmt
 wasm-pack build --target web --release
 
 # 优化 WASM
-wasm-opt -Oz pkg/excel_exporter_bg.wasm -o pkg/excel_exporter_bg_opt.wasm
+wasm-opt -Oz pkg/belobog_stellar_grid_bg.wasm -o pkg/belobog_stellar_grid_bg_opt.wasm
 ```
 
 ### 性能指标

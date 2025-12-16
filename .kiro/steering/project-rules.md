@@ -1,6 +1,6 @@
 # project_rules.md
 
-> **AI 助手项目规则** - `excel-exporter` 核心约束和代码修改指南
+> **AI 助手项目规则** - `belobog-stellar-grid` 核心约束和代码修改指南
 
 ---
 

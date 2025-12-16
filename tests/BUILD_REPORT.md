@@ -6,9 +6,9 @@
 - **WASM 文件大小**: 117 KB
 
 ## 文件检查
-- ✅ excel_exporter.js
-- ✅ excel_exporter_bg.wasm
-- ✅ excel_exporter.d.ts
+- ✅ belobog_stellar_grid.js
+- ✅ belobog_stellar_grid_bg.wasm
+- ✅ belobog_stellar_grid.d.ts
 - ✅ package.json
 
 ## API 检查
@@ -28,7 +28,7 @@ import init, {
     export_table_to_csv,
     export_table_to_csv_with_progress,
     export_table_to_csv_batch
-} from './pkg/excel_exporter.js';
+} from './pkg/belobog_stellar_grid.js';
 
 await init();
 

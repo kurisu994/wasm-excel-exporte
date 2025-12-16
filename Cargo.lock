@@ -44,6 +44,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
+name = "belobog-stellar-grid"
+version = "1.0.0"
+dependencies = [
+ "console_error_panic_hook",
+ "csv",
+ "js-sys",
+ "rust_xlsxwriter",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "wasm-bindgen-test",
+ "web-sys",
+ "wee_alloc",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -150,21 +165,6 @@ name = "equivalent"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "877a4ace8713b0bcf2a4e7eec82529c029f1d0619886d18145fea96c3ffe5c0f"
-
-[[package]]
-name = "excel-exporter"
-version = "2.0.0"
-dependencies = [
- "console_error_panic_hook",
- "csv",
- "js-sys",
- "rust_xlsxwriter",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "wasm-bindgen-test",
- "web-sys",
- "wee_alloc",
-]
 
 [[package]]
 name = "find-msvc-tools"

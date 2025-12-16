@@ -1,6 +1,6 @@
 [package]
-name = "excel-exporter"
-version = "1.2.1"
+name = "belobog-stellar-grid"
+version = "2.0.0"
 edition = "2024"
 
 [lib]

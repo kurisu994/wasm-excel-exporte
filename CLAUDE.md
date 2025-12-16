@@ -7,14 +7,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 这是一个企业级的 Rust WebAssembly 库，用于安全高效地将 HTML 表格数据导出为 CSV 和 XLSX 文件。
 
 **核心特性**：
-- **版本**：v1.2.1（Rust Edition 2024）
+- **版本**：v2.0.0（Rust Edition 2024）
 - **架构**：6 个模块化组件，职责单一，高内聚低耦合
 - **安全性**：RAII 资源管理 + 文件名验证 + 零 panic 设计
 - **性能**：零拷贝 + 分批异步处理 + LTO 优化（WASM 约 117KB）
 - **测试**：35+ 单元测试，100% 代码覆盖率
 - **文档**：完整的中文文档 + API 参考 + 框架集成示例
 
-项目仓库地址：https://github.com/kurisu994/excel-exporter
+项目仓库地址：https://github.com/kurisu994/belobog-stellar-grid
 
 ### 版本管理
 
@@ -488,7 +488,7 @@ pub fn export_table_to_csv(
 
 **JavaScript 调用**：
 ```javascript
-import init, { export_table_to_csv } from './pkg/excel_exporter.js';
+import init, { export_table_to_csv } from './pkg/belobog_stellar_grid.js';
 await init();
 export_table_to_csv('my-table', '数据.csv');
 ```
@@ -653,12 +653,12 @@ wasm-pack build --target web
 wasm-pack build --target web --release
 
 # 3. 使用 wasm-opt 进一步优化（约 117KB）
-wasm-opt -Oz pkg/excel_exporter_bg.wasm -o pkg/excel_exporter_bg_opt.wasm
+wasm-opt -Oz pkg/belobog_stellar_grid_bg.wasm -o pkg/belobog_stellar_grid_bg_opt.wasm
 
 # 4. 压缩传输（约 40KB）
-gzip -9 pkg/excel_exporter_bg_opt.wasm
+gzip -9 pkg/belobog_stellar_grid_bg_opt.wasm
 # 或
-brotli -9 pkg/excel_exporter_bg_opt.wasm  # 约 35KB
+brotli -9 pkg/belobog_stellar_grid_bg_opt.wasm  # 约 35KB
 ```
 
 **优化效果**：
@@ -828,7 +828,7 @@ Err(JsValue::from_str("未找到文件"))
 ### 开发环境调试
 ```javascript
 // 在 JavaScript 中启用详细错误信息
-import { set_panic_hook } from 'excel-exporter';
+import { set_panic_hook } from 'belobog-stellar-grid';
 set_panic_hook();
 ```
 

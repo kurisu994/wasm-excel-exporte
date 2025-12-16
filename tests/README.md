@@ -1,6 +1,6 @@
 # 测试目录结构
 
-本目录包含了 excel-exporter 项目的所有测试文件。
+本目录包含了 belobog-stellar-grid 项目的所有测试文件。
 
 ## 目录结构
 
@@ -505,7 +505,7 @@ echo "✅ 所有测试完成!"
 
 ## 📋 总结
 
-这个测试套件提供了全面的验证框架，确保 `excel-exporter` 在各种环境和条件下的可靠性。
+这个测试套件提供了全面的验证框架，确保 `belobog-stellar-grid` 在各种环境和条件下的可靠性。
 
 **测试文件概览**:
 - `web.rs` - WebAssembly 单元测试

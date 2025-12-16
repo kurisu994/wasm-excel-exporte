@@ -1,18 +1,18 @@
 <div align="center">
 
-  <h1><code>excel-exporter</code></h1>
+  <h1><code>belobog-stellar-grid</code></h1>
 
   <p><strong>🦀 现代化的 WebAssembly 表格导出库</strong></p>
   
   <p>一个安全、高效、易用的 Rust WebAssembly 库，专门用于将 HTML 表格数据导出为 CSV 文件</p>
 
   <p>
-    <img src="https://img.shields.io/badge/version-1.2.1-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/badge/version-2.0.0-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/rust-edition%202024-orange.svg" alt="Rust Edition" />
     <img src="https://img.shields.io/badge/test_coverage-100%25-brightgreen.svg" alt="Test Coverage" />
     <img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-green.svg" alt="License" />
     <img src="https://img.shields.io/badge/wasm_size-~117KB-green.svg" alt="WASM Size" />
-    <a href="https://github.com/kurisu994/excel-exporter"><img src="https://img.shields.io/badge/github-excel--exporter-181717.svg?logo=github" alt="GitHub" /></a>
+    <a href="https://github.com/kurisu994/belobog-stellar-grid"><img src="https://img.shields.io/badge/github-belobog--stellar--grid-181717.svg?logo=github" alt="GitHub" /></a>
   </p>
 
 <sub>Built with 🦀🕸 by <a href="https://rustwasm.github.io/">Rust and WebAssembly</a></sub>
@@ -23,7 +23,7 @@
 
 ## 📋 项目简介
 
-`excel-exporter` 是一个高性能的 WebAssembly 库，让你可以轻松地在浏览器中将 HTML 表格导出为 CSV/XLSX 文件。项目采用模块化架构设计，包含完善的文件名验证、RAII 资源管理和分批异步处理机制。
+`belobog-stellar-grid` 是一个高性能的 WebAssembly 库，让你可以轻松地在浏览器中将 HTML 表格导出为 CSV/XLSX 文件。项目采用模块化架构设计，包含完善的文件名验证、RAII 资源管理和分批异步处理机制。
 
 ### 为什么选择这个库？
 
@@ -76,7 +76,7 @@
 <html>
   <head>
     <script type="module">
-      import init, { export_table_to_csv } from "./pkg/excel_exporter.js";
+      import init, { export_table_to_csv } from "./pkg/belobog_stellar_grid.js";
 
       // 1. 初始化（只需一次）
       await init();
@@ -113,31 +113,31 @@
 
 ```bash
 # pnpm（推荐 - 更快的安装速度和更小的磁盘占用）
-pnpm add excel-exporter
+pnpm add belobog-stellar-grid
 
 # NPM
-npm install excel-exporter
+npm install belobog-stellar-grid
 
 # Yarn
-yarn add excel-exporter
+yarn add belobog-stellar-grid
 
 # Bun
-bun add excel-exporter
+bun add belobog-stellar-grid
 ```
 
 #### 方式 2：直接使用（无需构建）
 
 ```bash
 # 下载预构建的包
-wget https://github.com/kurisu994/excel-exporter/releases/latest/download/pkg.tar.gz
+wget https://github.com/kurisu994/belobog-stellar-grid/releases/latest/download/pkg.tar.gz
 tar -xzf pkg.tar.gz
 ```
 
 #### 方式 3：从源码构建
 
 ```bash
-git clone https://github.com/kurisu994/excel-exporter.git
-cd excel-exporter
+git clone https://github.com/kurisu994/belobog-stellar-grid.git
+cd belobog-stellar-grid
 wasm-pack build --target web
 ```
 
@@ -148,7 +148,7 @@ wasm-pack build --target web
 #### 导出单个表格
 
 ```javascript
-import init, { export_table_to_csv } from "excel-exporter";
+import init, { export_table_to_csv } from "belobog-stellar-grid";
 
 // 初始化模块（只需执行一次）
 await init();
@@ -163,7 +163,7 @@ export_table_to_csv("table-id", "销售报表_2024.csv");
 #### 带进度条的导出（推荐用于大表格）
 
 ```javascript
-import { export_table_to_csv_with_progress } from "excel-exporter";
+import { export_table_to_csv_with_progress } from "belobog-stellar-grid";
 
 export_table_to_csv_with_progress("large-table", "大数据.csv", (progress) => {
   console.log(`进度: ${Math.round(progress)}%`);
@@ -175,7 +175,7 @@ export_table_to_csv_with_progress("large-table", "大数据.csv", (progress) => 
 #### 分批异步导出（大数据量）
 
 ```javascript
-import { export_table_to_csv_batch } from "excel-exporter";
+import { export_table_to_csv_batch } from "belobog-stellar-grid";
 
 // 基本用法 - 处理 10,000+ 行数据
 await export_table_to_csv_batch("huge-table", "大数据.csv");
@@ -455,7 +455,7 @@ await export_table_to_csv_batch(
 
 ```jsx
 import { useState, useEffect } from "react";
-import init, { export_table_to_csv_with_progress } from "excel-exporter";
+import init, { export_table_to_csv_with_progress } from "belobog-stellar-grid";
 
 function TableExporter({ tableId }) {
   const [progress, setProgress] = useState(0);
@@ -484,7 +484,7 @@ function TableExporter({ tableId }) {
 ```vue
 <script setup>
 import { ref, onMounted } from "vue";
-import init, { export_table_to_csv_with_progress } from "excel-exporter";
+import init, { export_table_to_csv_with_progress } from "belobog-stellar-grid";
 
 const progress = ref(0);
 const ready = ref(false);
@@ -537,7 +537,7 @@ cargo install basic-http-server
 项目采用清晰的模块化架构，每个模块职责单一：
 
 ```
-excel-exporter/
+belobog-stellar-grid/
 ├── src/                          # 源代码目录
 │   ├── lib.rs                    # 主入口，仅做模块声明和重导出
 │   ├── validation.rs             # 文件名验证模块 ⭐
@@ -614,8 +614,8 @@ excel-exporter/
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/kurisu994/excel-exporter.git
-cd excel-exporter
+git clone https://github.com/kurisu994/belobog-stellar-grid.git
+cd belobog-stellar-grid
 
 # 2. 构建项目
 wasm-pack build --target web
@@ -737,8 +737,8 @@ test result: ok. 33 passed; 0 failed; 0 ignored
 wasm-pack build --target web --release
 
 # 使用 wasm-opt 进一步优化
-wasm-opt -Oz pkg/excel_exporter_bg.wasm \
-    -o pkg/excel_exporter_bg_opt.wasm
+wasm-opt -Oz pkg/belobog_stellar_grid_bg.wasm \
+    -o pkg/belobog_stellar_grid_bg_opt.wasm
 ```
 
 ---
@@ -935,10 +935,10 @@ git push origin v1.2.0
 遇到问题？我们随时为您提供帮助！
 
 1. 📖 查看 [文档](./EXAMPLES.md) 和 [FAQ](./docs/FAQ.md)
-2. 🔍 搜索现有的 [Issues](https://github.com/kurisu994/excel-exporter/issues)
-3. 💬 加入 [讨论区](https://github.com/kurisu994/excel-exporter/discussions)
-4. 🐛 报告 [Bug](https://github.com/kurisu994/excel-exporter/issues/new?template=bug_report.md)
-5. 💡 提出 [功能请求](https://github.com/kurisu994/excel-exporter/issues/new?template=feature_request.md)
+2. 🔍 搜索现有的 [Issues](https://github.com/kurisu994/belobog-stellar-grid/issues)
+3. 💬 加入 [讨论区](https://github.com/kurisu994/belobog-stellar-grid/discussions)
+4. 🐛 报告 [Bug](https://github.com/kurisu994/belobog-stellar-grid/issues/new?template=bug_report.md)
+5. 💡 提出 [功能请求](https://github.com/kurisu994/belobog-stellar-grid/issues/new?template=feature_request.md)
 
 ### 贡献方式
 

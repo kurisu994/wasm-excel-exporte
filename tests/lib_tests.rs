@@ -3,7 +3,7 @@
 //! 这个模块包含了所有核心功能的单元测试，旨在达到 100% 代码覆盖率
 
 use csv::Writer;
-use excel_exporter::{ensure_extension, validate_filename};
+use belobog_stellar_grid::{ensure_extension, validate_filename};
 use std::io::Cursor;
 
 // ============================================================================
