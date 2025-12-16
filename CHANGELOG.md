@@ -17,6 +17,16 @@
   - 更简洁、更统一的API设计
   - 示例：`export_table('my-table', '数据', ExportFormat.Xlsx)`
 
+### 🏗️ 架构重构
+
+- ♻️ **模块化重构**：将 `core.rs` 拆分为 4 个独立模块
+  - `core/mod.rs` - 核心协调模块（4.8KB）
+  - `core/export_csv.rs` - CSV 导出模块（3.2KB）
+  - `core/export_xlsx.rs` - Excel 导出模块（3.4KB）
+  - `core/table_extractor.rs` - 表格数据提取模块（2.6KB）
+- ✨ **职责分离**：每个模块单一职责，便于维护和扩展
+- 📚 **新增文档**：`src/core/README.md` 详细说明模块架构
+
 ### 已弃用
 
 - ⚠️ `export_table_to_csv()` - 请使用 `export_table(table_id, filename, ExportFormat::Csv)`
@@ -28,8 +38,8 @@
 
 - 📝 新增统一API示例：`examples/unified-api.html`
 - ✅ 新增 4 个单元测试覆盖 `ExportFormat` 枚举
-- 🧹 重构核心导出逻辑，提取公共函数 `extract_table_data()`
-- 📚 更新文档反映新的API设计
+- 🧹 提取公共函数，减少代码重复
+- 📚 更新文档反映新的API设计和模块架构
 
 ---
 

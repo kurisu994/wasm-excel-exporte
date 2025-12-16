@@ -1,0 +1,99 @@
+/// CSV 导出模块
+///
+/// 提供 CSV 格式的表格导出功能
+use crate::resource::UrlGuard;
+use crate::validation::{ensure_extension, validate_filename};
+use csv::Writer;
+use std::io::Cursor;
+use wasm_bindgen::prelude::*;
+use web_sys::{Blob, HtmlAnchorElement, Url};
+
+/// 导出为 CSV 格式
+///
+/// # 参数
+/// * `table_data` - 表格数据（二维字符串数组）
+/// * `filename` - 可选的导出文件名
+///
+/// # 返回值
+/// * `Ok(())` - 导出成功
+/// * `Err(JsValue)` - 导出失败，包含错误信息
+pub fn export_as_csv(
+    table_data: Vec<Vec<String>>,
+    filename: Option<String>,
+) -> Result<(), JsValue> {
+    // 创建一个 CSV 写入器
+    let mut wtr = Writer::from_writer(Cursor::new(Vec::new()));
+
+    // 写入所有数据
+    for row_data in table_data {
+        wtr.write_record(&row_data)
+            .map_err(|e| JsValue::from_str(&format!("写入 CSV 数据失败: {}", e)))?;
+    }
+
+    // 安全地完成 CSV 写入
+    wtr.flush()
+        .map_err(|e| JsValue::from_str(&format!("完成 CSV 写入失败: {}", e)))?;
+
+    // 获取 CSV 数据
+    let csv_data = wtr
+        .into_inner()
+        .map_err(|e| JsValue::from_str(&format!("获取 CSV 数据失败: {}", e)))?;
+
+    if csv_data.get_ref().is_empty() {
+        return Err(JsValue::from_str("没有可导出的数据"));
+    }
+
+    // 创建并下载文件
+    create_and_download_csv(csv_data.get_ref(), filename)
+}
+
+/// 创建 CSV Blob 并触发下载
+///
+/// # 参数
+/// * `data` - CSV 数据字节
+/// * `filename` - 可选的导出文件名
+fn create_and_download_csv(data: &[u8], filename: Option<String>) -> Result<(), JsValue> {
+    let window = web_sys::window().ok_or_else(|| JsValue::from_str("无法获取 window 对象"))?;
+    let document = window
+        .document()
+        .ok_or_else(|| JsValue::from_str("无法获取 document 对象"))?;
+
+    // 创建 CSV Blob 对象
+    let blob_property_bag = web_sys::BlobPropertyBag::new();
+    blob_property_bag.set_type("text/csv;charset=utf-8");
+
+    let array = js_sys::Array::of1(&js_sys::Uint8Array::from(data));
+    let blob = Blob::new_with_u8_array_sequence_and_options(&array, &blob_property_bag)
+        .map_err(|e| JsValue::from_str(&format!("创建 Blob 对象失败: {:?}", e)))?;
+
+    // 创建下载链接
+    let url = Url::create_object_url_with_blob(&blob)
+        .map_err(|e| JsValue::from_str(&format!("创建下载链接失败: {:?}", e)))?;
+
+    // 使用 RAII 模式确保 URL 资源释放
+    let _url_guard = UrlGuard::new(&url);
+
+    // 设置文件名
+    let final_filename = filename.unwrap_or_else(|| "table_export.csv".to_string());
+
+    // 验证文件名安全性
+    if let Err(e) = validate_filename(&final_filename) {
+        return Err(JsValue::from_str(&format!("文件名验证失败: {}", e)));
+    }
+
+    let final_filename = ensure_extension(&final_filename, "csv");
+
+    // 创建下载链接元素
+    let anchor = document
+        .create_element("a")
+        .map_err(|e| JsValue::from_str(&format!("创建下载链接元素失败: {:?}", e)))?;
+    let anchor = anchor
+        .dyn_into::<HtmlAnchorElement>()
+        .map_err(|_| JsValue::from_str("创建的元素不是有效的锚点元素"))?;
+
+    anchor.set_href(&url);
+    anchor.set_download(&final_filename);
+    anchor.click();
+
+    Ok(())
+}
