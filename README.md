@@ -896,15 +896,3 @@ git push origin v1.2.0
 - 所有贡献者和使用者 ❤️
 
 ---
-
-<div align="center">
-
-### ⭐ 觉得有用？给我们一个 Star！
-
-**Made with ❤️ and 🦀 by [Kurisu](https://github.com/kurisu994)**
-
-[报告问题](https://github.com/kurisu994/excel-exporter/issues) •
-[功能请求](https://github.com/kurisu994/excel-exporter/issues) •
-[讨论区](https://github.com/kurisu994/excel-exporter/discussions)
-
-</div>
