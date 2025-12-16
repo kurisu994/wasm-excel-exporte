@@ -11,6 +11,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 // 重新导出所有公共 API
 pub use validation::{ensure_extension, validate_filename};
+pub use resource::UrlGuard;
 
 // 导出新的统一接口
 pub use core::{export_table, ExportFormat};

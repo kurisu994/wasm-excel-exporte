@@ -30,7 +30,7 @@
 - **🚀 极致性能**：Rust 原生速度 + WebAssembly 优化
 - **🔒 企业级安全**：内置文件名验证，防止路径遍历攻击
 - **📦 轻量级**：约 117KB 的 WASM 文件（gzip 后约 40KB）
-- **✅ 100% 测试覆盖**：39 个单元测试确保代码质量
+- **✅ 100% 测试覆盖**：47 个单元测试确保代码质量
 - **🏗️ 模块化架构**：清晰的模块设计，易于维护和扩展
 - **🌍 国际化支持**：完美支持中文、日文、韩文等 Unicode 字符
 - **💾 多格式导出**：支持 CSV 和 XLSX (Excel) 两种格式
@@ -38,6 +38,7 @@
 ### ✨ 核心特性
 
 #### 🛡️ 安全性
+
 - **RAII 资源管理**：`UrlGuard` 自动清理 Blob URL
 - **文件名安全验证**：阻止路径遍历、危险字符等 10+ 种威胁
 - **全面错误处理**：所有函数返回 `Result<T, JsValue>`
@@ -45,6 +46,7 @@
 - **中文错误消息**：用户友好的错误提示
 
 #### 🚀 性能优化
+
 - **零拷贝操作**：直接操作 DOM，参数使用 `&str` 引用
 - **分批异步处理**：支持百万级数据导出，避免页面卡死
 - **wee_alloc 优化**：使用轻量级分配器减小文件体积
@@ -78,8 +80,14 @@
   </head>
   <body>
     <table id="my-table">
-      <tr><th>姓名</th><th>年龄</th></tr>
-      <tr><td>张三</td><td>25</td></tr>
+      <tr>
+        <th>姓名</th>
+        <th>年龄</th>
+      </tr>
+      <tr>
+        <td>张三</td>
+        <td>25</td>
+      </tr>
     </table>
     <button id="csv-btn">导出 CSV</button>
     <button id="xlsx-btn">导出 Excel</button>
@@ -186,10 +194,10 @@ try {
 
 查看 [examples/](./examples/) 目录获取完整示例：
 
-| 示例 | 难度 | 描述 |
-| --- | --- | --- |
-| basic-export.html | ![简单](https://img.shields.io/badge/难度-简单-green) | 基础导出示例 |
-| progress-export.html | ![中等](https://img.shields.io/badge/难度-中等-yellow) | 进度显示示例 |
+| 示例                   | 难度                                                   | 描述         |
+| ---------------------- | ------------------------------------------------------ | ------------ |
+| basic-export.html      | ![简单](https://img.shields.io/badge/难度-简单-green)  | 基础导出示例 |
+| progress-export.html   | ![中等](https://img.shields.io/badge/难度-中等-yellow) | 进度显示示例 |
 | advanced-features.html | ![进阶](https://img.shields.io/badge/难度-进阶-orange) | 高级特性示例 |
 
 **运行示例**：
@@ -216,14 +224,16 @@ basic-http-server .
 统一的表格导出函数，支持 CSV 和 XLSX 格式。
 
 **参数**：
+
 - `table_id`: 表格元素的 ID
 - `filename`: 导出文件名（可选）
 - `format`: 导出格式（可选，默认 CSV）
 - `progress_callback`: 进度回调函数（可选）
 
 **示例**：
+
 ```javascript
-import { export_table, ExportFormat } from 'belobog-stellar-grid';
+import { export_table, ExportFormat } from "belobog-stellar-grid";
 
 // 最简单的用法
 export_table("my-table");
@@ -246,6 +256,7 @@ export_table("large-table", "大数据", ExportFormat.Csv, (progress) => {
 **适用场景**：10,000+ 行数据
 
 **参数**：
+
 - `table_id`: 表格元素的 ID
 - `tbody_id`: 可选的数据表格体 ID
 - `filename`: 导出文件名（可选）
@@ -258,12 +269,12 @@ export_table("large-table", "大数据", ExportFormat.Csv, (progress) => {
 
 所有导出函数都会自动验证文件名安全性：
 
-| ✅ 允许 | ❌ 禁止 |
-| --- | --- |
-| `report_2024-12.csv` | `../etc/passwd` |
-| `数据导出.csv` | `file<name>.csv` |
-| `sales.data.csv` | `CON.csv` |
-| `测试-文件.xlsx` | `.hidden` |
+| ✅ 允许              | ❌ 禁止          |
+| -------------------- | ---------------- |
+| `report_2024-12.csv` | `../etc/passwd`  |
+| `数据导出.csv`       | `file<name>.csv` |
+| `sales.data.csv`     | `CON.csv`        |
+| `测试-文件.xlsx`     | `.hidden`        |
 
 ---
 
@@ -271,13 +282,14 @@ export_table("large-table", "大数据", ExportFormat.Csv, (progress) => {
 
 ### 环境要求
 
-| 工具 | 版本要求 |
-| --- | --- |
-| Rust | 1.82+ |
-| wasm-pack | latest |
-| Node.js | 16+（可选） |
+| 工具      | 版本要求    |
+| --------- | ----------- |
+| Rust      | 1.82+       |
+| wasm-pack | latest      |
+| Node.js   | 16+（可选） |
 
 **安装工具**：
+
 ```bash
 # 安装 Rust
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
@@ -315,14 +327,17 @@ belobog-stellar-grid/
 │   ├── lib.rs             # 主入口
 │   ├── validation.rs      # 文件名验证
 │   ├── resource.rs        # RAII 资源管理
-│   ├── core/              # 核心导出模块
-│   │   ├── mod.rs         # 协调模块
-│   │   ├── table_extractor.rs  # 数据提取
+│   ├── core/              # 核心导出模块组
+│   │   ├── mod.rs         # 统一 API 和协调
+│   │   ├── table_extractor.rs  # 表格数据提取
 │   │   ├── export_csv.rs  # CSV 导出
-│   │   └── export_xlsx.rs # Excel 导出
-│   ├── batch_export.rs    # 分批异步导出
+│   │   └── export_xlsx.rs # XLSX 导出
+│   ├── batch_export.rs    # 异步分批导出
 │   └── utils.rs           # 调试工具
-├── tests/                 # 测试目录
+├── tests/                 # 测试目录（47 个测试）
+│   ├── lib_tests.rs       # 基础功能测试（35 个）
+│   ├── test_resource.rs   # RAII 资源测试（8 个）
+│   └── test_unified_api.rs # 统一 API 测试（4 个）
 ├── examples/              # 示例目录
 ├── pkg/                   # WASM 包输出
 └── README.md             # 项目文档
@@ -334,12 +349,12 @@ belobog-stellar-grid/
 
 ### 运行时性能
 
-| 数据量 | 同步导出 | 分批异步导出 | 页面响应性 |
-| --- | --- | --- | --- |
-| 1,000 行 | <10ms | <10ms | 无明显差异 |
-| 10,000 行 | ~1s（卡顿） | ~1.2s（流畅） | **大幅改善** |
-| 100,000 行 | ~10s（卡死） | ~12s（流畅） | **从卡死到可用** |
-| 1,000,000 行 | 崩溃 | ~120s（流畅） | **完全解决** |
+| 数据量       | 同步导出     | 分批异步导出  | 页面响应性       |
+| ------------ | ------------ | ------------- | ---------------- |
+| 1,000 行     | <10ms        | <10ms         | 无明显差异       |
+| 10,000 行    | ~1s（卡顿）  | ~1.2s（流畅） | **大幅改善**     |
+| 100,000 行   | ~10s（卡死） | ~12s（流畅）  | **从卡死到可用** |
+| 1,000,000 行 | 崩溃         | ~120s（流畅） | **完全解决**     |
 
 ### 文件大小
 
@@ -369,6 +384,7 @@ belobog-stellar-grid/
 - ⭐ Star 项目
 
 **代码规范**：
+
 - 遵循 Rust 编码规范（`cargo fmt`）
 - 通过 Clippy 检查（`cargo clippy`）
 - 为新功能添加测试
