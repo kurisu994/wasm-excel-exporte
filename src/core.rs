@@ -4,6 +4,7 @@
 use crate::resource::UrlGuard;
 use crate::validation::{ensure_extension, validate_filename};
 use csv::Writer;
+use rust_xlsxwriter::Workbook;
 use std::io::Cursor;
 use wasm_bindgen::JsCast;
 use wasm_bindgen::prelude::*;
@@ -300,8 +301,125 @@ pub fn export_table_to_csv_with_progress(
 /// # 已弃用
 /// 请使用 `export_table_to_csv` 函数替代
 #[wasm_bindgen]
-#[deprecated(note = "请使用 export_table_to_csv(table_id, filename) 替代")]
-#[allow(deprecated)] // 允许调用主函数，避免递归弃用警告
+#[deprecated(note = "请使用 export_table_to_xlsx(table_id, filename) 替代")]
+#[allow(deprecated)]
 pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue> {
-    export_table_to_csv(table_id, None)
+    // 为老接口提供向后兼容，默认文件名
+    export_table_to_xlsx(table_id, None)
+}
+
+/// 导出 HTML 表格到 Excel .xlsx 文件
+///
+/// # 参数
+/// * `table_id` - 要导出的 HTML 表格元素的 ID
+/// * `filename` - 可选的导出文件名（可选，默认为 "table_export.xlsx"）
+///
+/// # 返回值
+/// * `Ok(())` - 导出成功
+/// * `Err(JsValue)` - 导出失败，包含错误信息
+#[wasm_bindgen]
+pub fn export_table_to_xlsx(table_id: &str, filename: Option<String>) -> Result<(), JsValue> {
+    if table_id.is_empty() {
+        return Err(JsValue::from_str("表格 ID 不能为空"));
+    }
+
+    // 获取 DOM
+    let window = web_sys::window().ok_or_else(|| JsValue::from_str("无法获取 window 对象"))?;
+    let document = window
+        .document()
+        .ok_or_else(|| JsValue::from_str("无法获取 document 对象"))?;
+
+    let table_element = document
+        .get_element_by_id(table_id)
+        .ok_or_else(|| JsValue::from_str(&format!("找不到 ID 为 '{}' 的表格元素", table_id)))?;
+
+    let table = table_element
+        .dyn_into::<HtmlTableElement>()
+        .map_err(|_| JsValue::from_str(&format!("元素 '{}' 不是有效的 HTML 表格", table_id)))?;
+
+    // 读取表格为二维数组
+    let rows = table.rows();
+    let row_count = rows.length();
+    if row_count == 0 {
+        return Err(JsValue::from_str("表格为空，没有数据可导出"));
+    }
+
+    // 创建工作簿与工作表
+    let mut workbook = Workbook::new();
+    let worksheet = workbook.add_worksheet();
+
+    for i in 0..row_count {
+        let row = rows
+            .get_with_index(i)
+            .ok_or_else(|| JsValue::from_str(&format!("无法获取第 {} 行数据", i + 1)))?;
+
+        let row = row
+            .dyn_into::<HtmlTableRowElement>()
+            .map_err(|_| JsValue::from_str(&format!("第 {} 行不是有效的表格行", i + 1)))?;
+
+        let cells = row.cells();
+        let cell_count = cells.length();
+
+        for j in 0..cell_count {
+            let cell = cells.get_with_index(j).ok_or_else(|| {
+                JsValue::from_str(&format!("无法获取第 {} 行第 {} 列单元格", i + 1, j + 1))
+            })?;
+
+            let cell = cell.dyn_into::<HtmlTableCellElement>().map_err(|_| {
+                JsValue::from_str(&format!(
+                    "第 {} 行第 {} 列不是有效的表格单元格",
+                    i + 1,
+                    j + 1
+                ))
+            })?;
+
+            let cell_text = cell.inner_text();
+            // 将单元格写入工作表
+            // 忽略写入错误并上抛为 JsValue
+            worksheet
+                .write_string(i as u32, j as u16, &cell_text)
+                .map_err(|e| JsValue::from_str(&format!("写入 Excel 单元格失败: {}", e)))?;
+        }
+    }
+
+    // 将工作簿写入内存缓冲区
+    let xlsx_bytes = workbook
+        .save_to_buffer()
+        .map_err(|e| JsValue::from_str(&format!("生成 Excel 文件失败: {}", e)))?;
+
+    if xlsx_bytes.is_empty() {
+        return Err(JsValue::from_str("没有可导出的数据"));
+    }
+
+    // 创建 Blob 并下载
+    let blob_property_bag = web_sys::BlobPropertyBag::new();
+    blob_property_bag.set_type(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+
+    let array = js_sys::Array::of1(&js_sys::Uint8Array::from(&xlsx_bytes[..]));
+    let blob = Blob::new_with_u8_array_sequence_and_options(&array, &blob_property_bag)
+        .map_err(|e| JsValue::from_str(&format!("创建 Blob 对象失败: {:?}", e)))?;
+
+    let url = Url::create_object_url_with_blob(&blob)
+        .map_err(|e| JsValue::from_str(&format!("创建下载链接失败: {:?}", e)))?;
+    let _url_guard = UrlGuard::new(&url);
+
+    let final_filename = filename.unwrap_or_else(|| "table_export.xlsx".to_string());
+    if let Err(e) = validate_filename(&final_filename) {
+        return Err(JsValue::from_str(&format!("文件名验证失败: {}", e)));
+    }
+    let final_filename = ensure_extension(&final_filename, "xlsx");
+
+    let anchor = document
+        .create_element("a")
+        .map_err(|e| JsValue::from_str(&format!("创建下载链接元素失败: {:?}", e)))?;
+    let anchor = anchor
+        .dyn_into::<HtmlAnchorElement>()
+        .map_err(|_| JsValue::from_str("创建的元素不是有效的锚点元素"))?;
+    anchor.set_href(&url);
+    anchor.set_download(&final_filename);
+    anchor.click();
+
+    Ok(())
 }

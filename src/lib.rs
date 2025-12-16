@@ -12,7 +12,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 // 重新导出所有公共 API
 pub use validation::{ensure_extension, validate_filename};
 
-pub use core::{export_table_to_csv, export_table_to_csv_with_progress};
+pub use core::{export_table_to_csv, export_table_to_csv_with_progress, export_table_to_xlsx};
 
 // 向后兼容：导出已弃用的函数
 #[allow(deprecated)]

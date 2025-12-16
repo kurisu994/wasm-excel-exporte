@@ -314,6 +314,33 @@ export_table_to_csv("my-table", "数据_2024-12-03.csv");
 
 ---
 
+#### `export_table_to_xlsx(table_id, filename?)` 🆕
+
+将表格直接导出为 Excel `.xlsx` 文件。
+
+```typescript
+function export_table_to_xlsx(table_id: string, filename?: string): void;
+```
+
+**参数**：
+
+- `table_id`: 表格元素的 ID
+- `filename`: 导出文件名（可选，默认 "table_export.xlsx"）
+
+**示例**：
+
+```javascript
+// 默认文件名（table_export.xlsx）
+export_table_to_xlsx("my-table");
+
+// 自定义文件名
+export_table_to_xlsx("my-table", "销售报表_2024.xlsx");
+```
+
+> 兼容性：该功能基于纯 Rust 的 `rust_xlsxwriter`，通过 WASM 在浏览器中生成 `.xlsx` 文件。
+
+---
+
 #### `export_table_to_csv_with_progress(table_id, filename?, callback?)`
 
 带进度回调的导出函数，推荐用于大型表格（100+ 行）。
@@ -773,7 +800,7 @@ git push origin v1.2.0
 
 **导出格式扩展**
 
-- [ ] 支持 Excel (.xlsx) 格式导出
+- [x] 支持 Excel (.xlsx) 格式导出
 - [ ] 支持 JSON 格式导出
 - [ ] 支持 TSV (Tab-Separated Values) 格式
 - [ ] 自定义 CSV 分隔符（逗号、分号、制表符等）

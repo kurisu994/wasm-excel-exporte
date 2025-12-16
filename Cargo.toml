@@ -22,6 +22,7 @@ wasm-bindgen-futures = "0.4"
 web-sys = { version = "0.3.83", features = ["HtmlTableElement", "HtmlTableRowElement", "HtmlTableCellElement", "HtmlTableSectionElement", "Document", "Element", "HtmlElement", "Node", "Window", "Url", "Blob", "HtmlCollection", "HtmlAnchorElement", "BlobPropertyBag", "console"] }
 js-sys = "0.3.83"
 csv = "1.4.0"
+rust_xlsxwriter = "0.69.0"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
