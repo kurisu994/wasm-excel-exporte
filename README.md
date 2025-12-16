@@ -7,7 +7,7 @@
   <p>一个安全、高效、易用的 Rust WebAssembly 库，专门用于将 HTML 表格数据导出为 CSV 文件</p>
 
   <p>
-    <img src="https://img.shields.io/badge/version-2.0.0-blue.svg" alt="Version" />
+    <img src="https://img.shields.io/badge/version-1.0.0-blue.svg" alt="Version" />
     <img src="https://img.shields.io/badge/rust-edition%202024-orange.svg" alt="Rust Edition" />
     <img src="https://img.shields.io/badge/test_coverage-100%25-brightgreen.svg" alt="Test Coverage" />
     <img src="https://img.shields.io/badge/license-MIT%2FApache--2.0-green.svg" alt="License" />
@@ -24,6 +24,8 @@
 ## 📋 项目简介
 
 `belobog-stellar-grid` 是一个高性能的 WebAssembly 库，让你可以轻松地在浏览器中将 HTML 表格导出为 CSV/XLSX 文件。项目采用模块化架构设计，包含完善的文件名验证、RAII 资源管理和分批异步处理机制。
+
+> **v1.0.0 重大更新**：全新的模块化架构设计，提供统一的 `export_table()` API，支持 CSV 和 XLSX 格式，同时保留向后兼容的 `export_table_to_csv_batch()` 函数。
 
 ### 为什么选择这个库？
 
@@ -76,14 +78,19 @@
 <html>
   <head>
     <script type="module">
-      import init, { export_table_to_csv } from "./pkg/belobog_stellar_grid.js";
+      import init, { export_table, ExportFormat } from "./pkg/belobog_stellar_grid.js";
 
       // 1. 初始化（只需一次）
       await init();
 
-      // 2. 导出表格
-      document.getElementById("btn").onclick = () => {
-        export_table_to_csv("my-table", "数据.csv");
+      // 2. 导出为 CSV（默认）
+      document.getElementById("csv-btn").onclick = () => {
+        export_table("my-table", "数据.csv");
+      };
+
+      // 3. 导出为 Excel
+      document.getElementById("xlsx-btn").onclick = () => {
+        export_table("my-table", "数据.xlsx", ExportFormat.Xlsx);
       };
     </script>
   </head>
@@ -98,7 +105,8 @@
         <td>25</td>
       </tr>
     </table>
-    <button id="btn">导出</button>
+    <button id="csv-btn">导出 CSV</button>
+    <button id="xlsx-btn">导出 Excel</button>
   </body>
 </html>
 ```
@@ -145,30 +153,39 @@ wasm-pack build --target web
 
 ### 💻 基本用法
 
-#### 导出单个表格
+#### 统一导出 API（推荐）
 
 ```javascript
-import init, { export_table_to_csv } from "belobog-stellar-grid";
+import init, { export_table, ExportFormat } from "belobog-stellar-grid";
 
 // 初始化模块（只需执行一次）
 await init();
 
-// 使用默认文件名导出
-export_table_to_csv("table-id");
+// 导出为 CSV（默认）
+export_table("table-id");
+export_table("table-id", "销售报表_2024.csv");
 
-// 使用自定义文件名导出
-export_table_to_csv("table-id", "销售报表_2024.csv");
+// 导出为 Excel
+export_table("table-id", "销售报表_2024.xlsx", ExportFormat.Xlsx);
+export_table("table-id", "销售报表_2024", ExportFormat.Xlsx); // 自动添加 .xlsx 扩展名
 ```
 
 #### 带进度条的导出（推荐用于大表格）
 
 ```javascript
-import { export_table_to_csv_with_progress } from "belobog-stellar-grid";
+import { export_table, ExportFormat } from "belobog-stellar-grid";
 
-export_table_to_csv_with_progress("large-table", "大数据.csv", (progress) => {
+// CSV 格式带进度
+export_table("large-table", "大数据.csv", ExportFormat.Csv, (progress) => {
   console.log(`进度: ${Math.round(progress)}%`);
-  // 更新你的 UI 进度条
   progressBar.style.width = `${progress}%`;
+});
+
+// Excel 格式带进度
+export_table("large-table", "大数据.xlsx", ExportFormat.Xlsx, (progress) => {
+  console.log(`进度: ${Math.round(progress)}%`);
+  progressBar.style.width = `${progress}%`;
+  progressText.textContent = `${Math.round(progress)}%`;
 });
 ```
 
@@ -209,14 +226,16 @@ await export_table_to_csv_batch(
 #### 批量导出
 
 ```javascript
+import { export_table, ExportFormat } from "belobog-stellar-grid";
+
 const tables = [
-  { id: "sales", name: "销售数据" },
-  { id: "products", name: "产品信息" },
-  { id: "customers", name: "客户列表" },
+  { id: "sales", name: "销售数据", format: ExportFormat.Csv },
+  { id: "products", name: "产品信息", format: ExportFormat.Xlsx },
+  { id: "customers", name: "客户列表", format: ExportFormat.Csv },
 ];
 
 for (const table of tables) {
-  export_table_to_csv(table.id, `${table.name}.csv`);
+  export_table(table.id, `${table.name}`, table.format);
   // 添加小延迟避免浏览器下载限制
   await new Promise((r) => setTimeout(r, 100));
 }
@@ -225,8 +244,10 @@ for (const table of tables) {
 #### 错误处理
 
 ```javascript
+import { export_table, ExportFormat } from "belobog-stellar-grid";
+
 try {
-  export_table_to_csv("table-id", "报表.csv");
+  export_table("table-id", "报表", ExportFormat.Xlsx);
   alert("✅ 导出成功！");
 } catch (error) {
   console.error("导出失败:", error);
@@ -287,102 +308,76 @@ basic-http-server .
 
 ### 核心函数
 
-#### `export_table_to_csv(table_id, filename?)`
+#### `export_table(table_id, filename?, format?, progress_callback?)` 🆕 推荐
 
-标准的表格导出函数，适用于大多数场景。
-
-```typescript
-function export_table_to_csv(table_id: string, filename?: string): void;
-```
-
-**参数**：
-
-- `table_id`: 表格元素的 ID
-- `filename`: 导出文件名（可选，默认 "table_export.csv"）
-
-**示例**：
-
-```javascript
-// 默认文件名
-export_table_to_csv("my-table");
-
-// 自定义文件名
-export_table_to_csv("my-table", "数据_2024-12-03.csv");
-```
-
-**可能的错误**：
-
-- 表格 ID 不存在
-- 文件名不合法
-- 表格为空
-
----
-
-#### `export_table_to_xlsx(table_id, filename?)` 🆕
-
-将表格直接导出为 Excel `.xlsx` 文件。
+统一的表格导出函数，支持 CSV 和 XLSX 格式，适用于所有场景。
 
 ```typescript
-function export_table_to_xlsx(table_id: string, filename?: string): void;
-```
-
-**参数**：
-
-- `table_id`: 表格元素的 ID
-- `filename`: 导出文件名（可选，默认 "table_export.xlsx"）
-
-**示例**：
-
-```javascript
-// 默认文件名（table_export.xlsx）
-export_table_to_xlsx("my-table");
-
-// 自定义文件名
-export_table_to_xlsx("my-table", "销售报表_2024.xlsx");
-```
-
-> 兼容性：该功能基于纯 Rust 的 `rust_xlsxwriter`，通过 WASM 在浏览器中生成 `.xlsx` 文件。
-
----
-
-#### `export_table_to_csv_with_progress(table_id, filename?, callback?)`
-
-带进度回调的导出函数，推荐用于大型表格（100+ 行）。
-
-```typescript
-function export_table_to_csv_with_progress(
+function export_table(
   table_id: string,
   filename?: string,
-  callback?: (progress: number) => void
+  format?: ExportFormat,
+  progress_callback?: (progress: number) => void
 ): void;
+
+enum ExportFormat {
+  Csv,  // CSV 格式（默认）
+  Xlsx, // Excel XLSX 格式
+}
 ```
 
 **参数**：
 
 - `table_id`: 表格元素的 ID
-- `filename`: 导出文件名（可选）
-- `callback`: 进度回调函数，接收 0-100 的进度值
+- `filename`: 导出文件名（可选，默认 "table_export.csv" 或 "table_export.xlsx"）
+- `format`: 导出格式（可选，默认 `ExportFormat.Csv`）
+- `progress_callback`: 进度回调函数，接收 0-100 的进度值（可选）
 
 **示例**：
 
 ```javascript
-export_table_to_csv_with_progress("large-table", "大数据.csv", (progress) => {
-  console.log(`${progress.toFixed(1)}%`);
-  document.getElementById("bar").style.width = `${progress}%`;
+import { export_table, ExportFormat } from 'belobog-stellar-grid';
+
+// 最简单的用法（CSV，无进度）
+export_table("my-table");
+
+// 指定文件名（CSV）
+export_table("my-table", "数据.csv");
+
+// 导出为 Excel
+export_table("my-table", "报表.xlsx", ExportFormat.Xlsx);
+
+// 带进度回调
+export_table("large-table", "大数据", ExportFormat.Csv, (progress) => {
+  console.log(`进度: ${progress.toFixed(1)}%`);
+  progressBar.style.width = `${progress}%`;
 });
 ```
 
+**特性**：
+- ✅ 统一 API，同时支持 CSV 和 XLSX 格式
+- ✅ 自动添加扩展名（如果没有提供）
+- ✅ 可选的实时进度反馈
+- ✅ 完整的文件名验证
+- ✅ 类型安全的格式枚举
+
+**可能的错误**：
+- 表格 ID 不存在或为空
+- 文件名不合法
+- 表格为空，没有数据可导出
+
 ---
 
-#### `export_table_to_csv_batch(table_id, filename?, batch_size?, callback?)` 🆕
+#### `export_table_to_csv_batch(table_id, tbody_id?, filename?, batch_size?, callback?)` 🔧 向后兼容
 
 **分批异步导出函数**，专为大数据量设计（推荐用于 10,000+ 行），通过分批处理避免页面卡死。
 
-> **💡 v1.2.0 新增**：这个函数使用异步分批处理技术，在处理批次之间让出控制权给浏览器，确保即使导出百万级数据时页面也能保持响应。
+> **💡 注意**：这个函数保留以向后兼容旧版本。对于新项目，推荐使用统一的 `export_table()` API。
 
 ```typescript
 async function export_table_to_csv_batch(
   table_id: string,
+  tbody_id?: string,
   filename?: string,
   batch_size?: number,
   callback?: (progress: number) => void
@@ -392,6 +387,7 @@ async function export_table_to_csv_batch(
 **参数**：
 
 - `table_id`: 表格元素的 ID
+- `tbody_id`: 可选的数据表格体 ID（用于分离表头和数据，如虚拟滚动）
 - `filename`: 导出文件名（可选，默认 "table_export.csv"）
 - `batch_size`: 每批处理的行数（可选，默认 1000）
 - `callback`: 进度回调函数，接收 0-100 的进度值
@@ -400,11 +396,12 @@ async function export_table_to_csv_batch(
 
 ```javascript
 // 基本用法
-await export_table_to_csv_batch("huge-table", "百万数据.csv");
+await export_table_to_csv_batch("huge-table", null, "百万数据.csv");
 
 // 自定义批次大小和进度回调
 await export_table_to_csv_batch(
   "huge-table",
+  null,
   "百万数据.csv",
   1000, // 每批处理 1000 行
   (progress) => {
@@ -412,6 +409,13 @@ await export_table_to_csv_batch(
     progressBar.style.width = `${progress}%`;
     progressText.textContent = `${Math.round(progress)}%`;
   }
+);
+
+// 分离表头和数据（虚拟滚动场景）
+await export_table_to_csv_batch(
+  "table-header",  // 表头
+  "table-body",    // 数据体
+  "虚拟滚动数据.csv"
 );
 ```
 
@@ -455,7 +459,7 @@ await export_table_to_csv_batch(
 
 ```jsx
 import { useState, useEffect } from "react";
-import init, { export_table_to_csv_with_progress } from "belobog-stellar-grid";
+import init, { export_table, ExportFormat } from "belobog-stellar-grid";
 
 function TableExporter({ tableId }) {
   const [progress, setProgress] = useState(0);
@@ -465,14 +469,17 @@ function TableExporter({ tableId }) {
     init().then(() => setReady(true));
   }, []);
 
-  const handleExport = () => {
-    export_table_to_csv_with_progress(tableId, "导出数据.csv", setProgress);
+  const handleExport = (format) => {
+    export_table(tableId, "导出数据", format, setProgress);
   };
 
   return (
     <div>
-      <button onClick={handleExport} disabled={!ready}>
-        导出 {progress > 0 && `(${Math.round(progress)}%)`}
+      <button onClick={() => handleExport(ExportFormat.Csv)} disabled={!ready}>
+        导出 CSV {progress > 0 && `(${Math.round(progress)}%)`}
+      </button>
+      <button onClick={() => handleExport(ExportFormat.Xlsx)} disabled={!ready}>
+        导出 Excel {progress > 0 && `(${Math.round(progress)}%)`}
       </button>
     </div>
   );
@@ -484,7 +491,7 @@ function TableExporter({ tableId }) {
 ```vue
 <script setup>
 import { ref, onMounted } from "vue";
-import init, { export_table_to_csv_with_progress } from "belobog-stellar-grid";
+import init, { export_table, ExportFormat } from "belobog-stellar-grid";
 
 const progress = ref(0);
 const ready = ref(false);
@@ -494,13 +501,20 @@ onMounted(async () => {
   ready.value = true;
 });
 
-const handleExport = () => {
-  export_table_to_csv_with_progress("my-table", "数据.csv", (p) => (progress.value = p));
+const handleExport = (format) => {
+  export_table("my-table", "数据", format, (p) => (progress.value = p));
 };
 </script>
 
 <template>
-  <button @click="handleExport" :disabled="!ready">导出 {{ progress > 0 ? `(${Math.round(progress)}%)` : "" }}</button>
+  <div>
+    <button @click="handleExport(ExportFormat.Csv)" :disabled="!ready">
+      导出 CSV {{ progress > 0 ? `(${Math.round(progress)}%)` : "" }}
+    </button>
+    <button @click="handleExport(ExportFormat.Xlsx)" :disabled="!ready">
+      导出 Excel {{ progress > 0 ? `(${Math.round(progress)}%)` : "" }}
+    </button>
+  </div>
 </template>
 ```
 
@@ -545,10 +559,16 @@ belobog-stellar-grid/
 │   │                             # - ensure_extension(): 扩展名处理
 │   ├── resource.rs               # RAII 资源管理模块 ⭐
 │   │                             # - UrlGuard: 自动释放 Blob URL
-│   ├── core.rs                   # 核心同步导出功能 ⭐
-│   │                             # - export_table_to_csv()
-│   │                             # - export_table_to_csv_with_progress()
-│   │                             # - export_table_to_xlsx()
+│   ├── core/                     # 核心导出模块 ⭐
+│   │   ├── mod.rs                # 模块协调和统一 API
+│   │   │                         # - export_table(): 统一导出接口
+│   │   │                         # - ExportFormat: 格式枚举
+│   │   ├── table_extractor.rs    # 表格数据提取
+│   │   │                         # - extract_table_data()
+│   │   ├── export_csv.rs         # CSV 导出
+│   │   │                         # - export_as_csv()
+│   │   └── export_xlsx.rs        # Excel 导出
+│   │                             # - export_as_xlsx()
 │   ├── batch_export.rs           # 分批异步导出功能 ⭐
 │   │                             # - export_table_to_csv_batch()
 │   │                             # - yield_to_browser()
@@ -603,10 +623,11 @@ belobog-stellar-grid/
 ```
 
 **架构设计原则**：
-1. **模块化**：每个模块职责单一，互不干扰
-2. **安全优先**：所有输入验证，RAII 资源管理
-3. **零拷贝**：性能优化，参数使用引用
-4. **错误处理**：中文消息，用户友好
+1. **模块化**：core 模块进一步细分为协调、提取、导出子模块，职责更清晰
+2. **统一 API**：`export_table()` 提供统一接口，支持多种格式
+3. **安全优先**：所有输入验证，RAII 资源管理
+4. **零拷贝**：性能优化，参数使用引用
+5. **错误处理**：中文消息，用户友好
 
 ---
 
@@ -793,22 +814,14 @@ git push origin v1.2.0
 
 详细的版本更新记录请查看 [CHANGELOG.md](./CHANGELOG.md)。
 
----
+### v1.0.0 亮点 🎉
 
-## 🌟 特性对比
-
-| 特性               | v1.0   | v1.1   | v1.2      |
-| ------------------ | ------ | ------ | --------- |
-| 基本导出           | ✅     | ✅     | ✅        |
-| 自定义文件名       | ❌     | ✅     | ✅        |
-| 进度回调           | ❌     | ✅     | ✅        |
-| 分批异步导出       | ❌     | ❌     | ✅        |
-| 文件名验证         | ❌     | 基础   | 完整      |
-| 模块化架构         | ❌     | ❌     | ✅        |
-| WASM 大小          | ~800KB | ~661KB | **117KB** |
-| 测试覆盖率         | ~20%   | ~30%   | **100%**  |
-| 示例数量           | 0      | 1      | **3**     |
-| 文档质量           | 基础   | 良好   | **优秀**  |
+- ✅ **统一导出 API**：`export_table()` 支持 CSV 和 XLSX 格式
+- 📦 **模块化重构**：core 模块细分为协调、提取、导出子模块
+- 🎯 **类型安全**：`ExportFormat` 枚举提供编译时类型检查
+- ⚡ **性能优化**：进度回调优化为每10行更新，减少开销
+- 🔧 **向后兼容**：保留 `export_table_to_csv_batch()` 旧 API
+- 📝 **完整示例**：4 个完整示例，包括虚拟滚动场景
 
 ---
 

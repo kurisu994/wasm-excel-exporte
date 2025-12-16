@@ -7,11 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 这是一个企业级的 Rust WebAssembly 库，用于安全高效地将 HTML 表格数据导出为 CSV 和 XLSX 文件。
 
 **核心特性**：
-- **版本**：v2.0.0（Rust Edition 2024）
-- **架构**：6 个模块化组件，职责单一，高内聚低耦合
+- **版本**：v1.0.0（Rust Edition 2024）
+- **架构**：7 个模块化组件（core 模块细分为 4 个子模块），职责单一，高内聚低耦合
 - **安全性**：RAII 资源管理 + 文件名验证 + 零 panic 设计
 - **性能**：零拷贝 + 分批异步处理 + LTO 优化（WASM 约 117KB）
-- **测试**：35+ 单元测试，100% 代码覆盖率
+- **测试**：33+ 单元测试，100% 代码覆盖率
 - **文档**：完整的中文文档 + API 参考 + 框架集成示例
 
 项目仓库地址：https://github.com/kurisu994/belobog-stellar-grid
@@ -27,20 +27,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### 模块化架构（严格遵循）
 
-项目采用 6 个模块，每个模块职责单一，互不干扰：
+项目采用 7 个模块（core 细分为 4 个子模块），每个模块职责单一，互不干扰：
 
 ```
 src/
-├── lib.rs              # 主入口：仅做模块声明和重导出（禁止业务逻辑）
-├── validation.rs       # 文件名验证：validate_filename() + ensure_extension()
-├── resource.rs         # RAII 资源管理：UrlGuard 自动释放 Blob URL
-├── core.rs             # 同步导出：CSV/XLSX 基础导出 + 进度回调
-├── batch_export.rs     # 异步分批导出：大数据量处理 + yield_to_browser()
-└── utils.rs            # 调试工具：set_panic_hook() 开发环境错误显示
+├── lib.rs                     # 主入口：仅做模块声明和重导出（禁止业务逻辑）
+├── validation.rs              # 文件名验证：validate_filename() + ensure_extension()
+├── resource.rs                # RAII 资源管理：UrlGuard 自动释放 Blob URL
+├── core/                      # 核心导出模块组
+│   ├── mod.rs                 # 协调模块：export_table() 统一 API + ExportFormat 枚举
+│   ├── table_extractor.rs     # 数据提取：extract_table_data()
+│   ├── export_csv.rs          # CSV 导出：export_as_csv()
+│   └── export_xlsx.rs         # Excel 导出：export_as_xlsx()
+├── batch_export.rs            # 异步分批导出：大数据量处理 + yield_to_browser()
+└── utils.rs                   # 调试工具：set_panic_hook() 开发环境错误显示
 ```
 
 **架构约束**：
 - ✅ `lib.rs` **仅**做模块声明和 `pub use` 重导出
+- ✅ `core/mod.rs` 协调各导出模块，提供统一的 `export_table()` API
+- ✅ `table_extractor.rs` 负责 DOM 数据提取，与导出格式无关
+- ✅ `export_csv.rs` 和 `export_xlsx.rs` 各自处理特定格式的导出
 - ✅ 每个模块职责单一（单一职责原则）
 - ✅ 模块间通过公共接口交互
 - ❌ **禁止**在 `lib.rs` 中添加任何业务逻辑
@@ -278,9 +285,9 @@ wasm-pack build --target web --release
 
 ## 项目架构
 
-### 模块化架构详解（v1.2.1）
+### 模块化架构详解（v1.0.0）
 
-项目采用 6 个模块化组件，每个模块职责单一，高内聚低耦合：
+项目采用 7 个模块化组件（core 细分为 4 个子模块），每个模块职责单一，高内聚低耦合：
 
 #### 核心模块
 
@@ -290,7 +297,7 @@ wasm-pack build --target web --release
 - **导出**：所有公共函数通过 `pub use` 重导出
 - **特性**：`wee_alloc` 全局分配器（可选）
 
-**2. src/validation.rs** - 文件名验证模块（🆕 v1.2.0）
+**2. src/validation.rs** - 文件名验证模块
 - **职责**：文件名安全验证和扩展名处理
 - **API**：
   - `validate_filename(&str) -> Result<(), String>`: 10+ 种安全检查
@@ -302,7 +309,7 @@ wasm-pack build --target web --release
   - `ensure_extension(&str, &str) -> String`: 确保正确扩展名
 - **测试覆盖**：14 个单元测试
 
-**3. src/resource.rs** - RAII 资源管理模块（🆕 v1.2.0）
+**3. src/resource.rs** - RAII 资源管理模块
 - **职责**：Web 资源的自动生命周期管理
 - **API**：
   - `UrlGuard::new(&str) -> Self`: 创建资源守卫
@@ -310,17 +317,48 @@ wasm-pack build --target web --release
 - **原理**：RAII（Resource Acquisition Is Initialization）模式
 - **优势**：即使异常也能保证资源释放，防止内存泄漏
 
-**4. src/core.rs** - 核心同步导出模块（🆕 v1.2.0）
-- **职责**：基础表格导出功能（CSV + XLSX）
+**4. src/core/mod.rs** - 核心协调模块 🆕
+- **职责**：统一导出接口，协调各导出模块
 - **API**：
-  - `export_table_to_csv(table_id, filename?) -> Result<(), JsValue>`: 主导出函数
-  - `export_table_to_csv_with_progress(table_id, filename?, callback?) -> Result<(), JsValue>`: 带进度回调
-  - `export_table_to_xlsx(table_id, filename?) -> Result<(), JsValue>`: Excel 导出（🆕 v1.2.1）
-  - `export_table_to_excel(table_id) -> Result<(), JsValue>`: 已弃用，向后兼容
-- **特点**：同步处理，适合小到中等数据量（< 10,000 行）
+  - `export_table(table_id, filename?, format?, callback?) -> Result<(), JsValue>`: 统一导出函数
+  - `ExportFormat` 枚举：`Csv` | `Xlsx`
+- **特点**：
+  - 类型安全的格式枚举
+  - 自动添加扩展名
+  - 可选的实时进度反馈
+  - 统一的错误处理
 
-**5. src/batch_export.rs** - 分批异步导出模块（🆕 v1.2.1）
-- **职责**：大数据量表格的异步分批处理
+**5. src/core/table_extractor.rs** - 表格数据提取模块 🆕
+- **职责**：从 DOM 中提取表格数据
+- **API**：
+  - `extract_table_data(table_id) -> Result<Vec<Vec<String>>, JsValue>`
+- **特点**：
+  - 与导出格式无关
+  - 可复用的数据提取逻辑
+  - 完整的 DOM 遍历和类型检查
+
+**6. src/core/export_csv.rs** - CSV 导出模块 🆕
+- **职责**：CSV 格式的数据导出
+- **API**：
+  - `export_as_csv(table_data, filename, callback) -> Result<(), JsValue>`
+  - `create_and_download_csv(data, filename) -> Result<(), JsValue>`
+- **特点**：
+  - 使用 `csv` crate 进行序列化
+  - 每10行更新一次进度，减少开销
+  - RAII 管理 Blob URL
+
+**7. src/core/export_xlsx.rs** - Excel 导出模块 🆕
+- **职责**：Excel XLSX 格式的数据导出
+- **API**：
+  - `export_as_xlsx(table_data, filename, callback) -> Result<(), JsValue>`
+  - `create_and_download_xlsx(data, filename) -> Result<(), JsValue>`
+- **特点**：
+  - 使用 `rust_xlsxwriter` 生成 Excel 文件
+  - 每10行更新一次进度
+  - RAII 管理 Blob URL
+
+**8. src/batch_export.rs** - 分批异步导出模块
+- **职责**：大数据量表格的异步分批处理（向后兼容）
 - **API**：
   - `export_table_to_csv_batch(table_id, tbody_id?, filename?, batch_size?, callback?) -> Promise<void>`: 异步导出
   - `yield_to_browser() -> Promise<void>`: 让出控制权给浏览器事件循环（内部函数）
@@ -335,7 +373,7 @@ wasm-pack build --target web --release
   - 100,000 行：~12s（可用）
   - 1,000,000 行：~120s（完全可用）
 
-**6. src/utils.rs** - WebAssembly 调试工具模块
+**9. src/utils.rs** - WebAssembly 调试工具模块
 - **职责**：开发环境调试支持
 - **API**：
   - `set_panic_hook()`: 设置 panic 钩子，在控制台显示详细错误
@@ -343,7 +381,7 @@ wasm-pack build --target web --release
 
 #### 测试模块
 
-**tests/lib_tests.rs** - 综合单元测试套件（35+ 个测试，100% 覆盖）
+**tests/lib_tests.rs** - 综合单元测试套件（33+ 个测试，100% 覆盖）
 - 文件名扩展名处理（5 个测试）
 - 输入验证逻辑（4 个测试）
 - CSV Writer 操作（6 个测试）
@@ -369,6 +407,31 @@ wasm-pack build --target web --release
 
 **.cargo/config.toml** - Cargo 构建配置
 - 测试目标配置（解决 wasm32 无法运行测试的问题）
+
+### v1.0.0 架构改进 🆕
+
+**模块重构亮点**：
+
+1. **核心模块细分**：将原来的 `core.rs` 拆分为 4 个子模块：
+   - `mod.rs`：协调和统一 API
+   - `table_extractor.rs`：数据提取（可复用）
+   - `export_csv.rs`：CSV 导出
+   - `export_xlsx.rs`：Excel 导出
+
+2. **职责更清晰**：
+   - 数据提取与格式导出分离
+   - 每个导出模块独立处理特定格式
+   - 协调模块统一对外接口
+
+3. **更好的可扩展性**：
+   - 添加新格式只需新增导出模块
+   - 不影响现有代码
+   - 便于单元测试
+
+4. **性能优化**：
+   - 进度回调优化为每10行更新
+   - 减少回调开销
+   - 提升大数据导出性能
 
 ### WebAssembly 架构设计模式
 
@@ -468,61 +531,59 @@ for batch in batches {
 
 ## 核心 API 使用
 
-项目提供 5 个主要公共函数，涵盖不同使用场景：
+项目提供 2 个主要公共函数，涵盖不同使用场景：
 
-### 1. 同步导出（基础版）
-
-```rust
-#[wasm_bindgen]
-pub fn export_table_to_csv(
-    table_id: &str,
-    filename: Option<String>
-) -> Result<(), JsValue>
-```
-
-**适用场景**：小到中等数据量（< 1,000 行）
-**特点**：
-- 同步处理，立即完成
-- 无进度反馈
-- 简单易用
-
-**JavaScript 调用**：
-```javascript
-import init, { export_table_to_csv } from './pkg/belobog_stellar_grid.js';
-await init();
-export_table_to_csv('my-table', '数据.csv');
-```
-
----
-
-### 2. 同步导出（带进度）
+### 1. 统一导出（推荐）🆕
 
 ```rust
 #[wasm_bindgen]
-pub fn export_table_to_csv_with_progress(
+pub fn export_table(
     table_id: &str,
     filename: Option<String>,
+    format: Option<ExportFormat>,
     progress_callback: Option<js_sys::Function>
 ) -> Result<(), JsValue>
+
+#[wasm_bindgen]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ExportFormat {
+    #[default]
+    Csv,
+    Xlsx,
+}
 ```
 
-**适用场景**：中等数据量（100-10,000 行），需要进度反馈
+**适用场景**：所有场景，推荐使用
 **特点**：
-- 同步处理，但提供进度回调
-- 适合需要 UI 反馈的场景
-- 简单的进度条实现
+- 统一接口，支持 CSV 和 XLSX 格式
+- 类型安全的格式枚举
+- 可选的实时进度反馈
+- 自动添加扩展名
 
 **JavaScript 调用**：
 ```javascript
-export_table_to_csv_with_progress('my-table', '数据.csv', (progress) => {
-    console.log(`进度: ${progress.toFixed(1)}%`);
-    progressBar.style.width = `${progress}%`;
+import init, { export_table, ExportFormat } from './pkg/belobog_stellar_grid.js';
+await init();
+
+// 最简单的用法（CSV，无进度）
+export_table('my-table');
+
+// 指定文件名（CSV）
+export_table('my-table', '数据.csv');
+
+// 导出为 Excel
+export_table('my-table', '报表.xlsx', ExportFormat.Xlsx);
+
+// 带进度回调
+export_table('large-table', '大数据', ExportFormat.Csv, (progress) => {
+  console.log(`进度: ${progress.toFixed(1)}%`);
+  progressBar.style.width = `${progress}%`;
 });
 ```
 
 ---
 
-### 3. 分批异步导出（大数据）🆕
+### 2. 分批异步导出（向后兼容）
 
 ```rust
 #[wasm_bindgen]
@@ -535,7 +596,7 @@ pub async fn export_table_to_csv_batch(
 ) -> Result<JsValue, JsValue>
 ```
 
-**适用场景**：大数据量（10,000+ 行），甚至百万级数据
+**适用场景**：大数据量（10,000+ 行），甚至百万级数据；虚拟滚动场景
 **特点**：
 - 异步分批处理，批次间让出控制权
 - 页面保持响应，不卡死
@@ -567,38 +628,6 @@ await export_table_to_csv_batch(
 
 ---
 
-### 4. Excel 导出 🆕
-
-```rust
-#[wasm_bindgen]
-pub fn export_table_to_xlsx(
-    table_id: &str,
-    filename: Option<String>
-) -> Result<(), JsValue>
-```
-
-**适用场景**：需要 `.xlsx` 格式（Excel 原生格式）
-**特点**：
-- 基于 `rust_xlsxwriter` 纯 Rust 实现
-- 无需外部依赖
-- 保留表格结构
-
-**JavaScript 调用**：
-```javascript
-export_table_to_xlsx('my-table', '报表.xlsx');
-```
-
----
-
-### 5. 向后兼容函数（已弃用）
-
-```rust
-#[wasm_bindgen]
-#[deprecated(note = "请使用 export_table_to_xlsx(table_id, filename) 替代")]
-pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue>
-```
-
-**说明**：仅为向后兼容保留，新项目不应使用
 
 ## WebAssembly 特定注意事项
 
