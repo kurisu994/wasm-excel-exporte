@@ -9,15 +9,27 @@
 
 ## [Unreleased]
 
-### 改进
-- 📝 更新 CLAUDE.md 文档，添加模块化架构说明
-- 📚 优化 README.md 性能指标和 WASM 大小显示
-- 📄 调整 BUILD_REPORT.md 中的 WASM 文件大小记录
-- 🔗 统一所有文档中的仓库地址链接
+### 🎉 重大更新
 
-### 测试
-- ✅ 添加分批导出和进度回调的浏览器测试
-- 📊 更新测试报告文档反映新增功能
+- 🆕 **统一导出API**：新增 `export_table(table_id, filename, format)` 函数
+  - 通过 `ExportFormat` 枚举控制导出格式（Csv 或 Xlsx）
+  - 默认导出为 CSV 格式
+  - 更简洁、更统一的API设计
+  - 示例：`export_table('my-table', '数据', ExportFormat.Xlsx)`
+
+### 已弃用
+
+- ⚠️ `export_table_to_csv()` - 请使用 `export_table(table_id, filename, ExportFormat::Csv)`
+- ⚠️ `export_table_to_xlsx()` - 请使用 `export_table(table_id, filename, ExportFormat::Xlsx)`
+- ⚠️ `export_table_to_excel()` - 请使用 `export_table(table_id, filename, ExportFormat::Xlsx)`
+- ⚠️ `export_table_to_csv_with_progress()` - 暂时保留，进度回调将在 v2.0 统一支持
+
+### 改进
+
+- 📝 新增统一API示例：`examples/unified-api.html`
+- ✅ 新增 4 个单元测试覆盖 `ExportFormat` 枚举
+- 🧹 重构核心导出逻辑，提取公共函数 `extract_table_data()`
+- 📚 更新文档反映新的API设计
 
 ---
 

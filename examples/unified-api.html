@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>统一导出API示例 - excel-exporter</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        padding: 40px 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 32px;
+      }
+
+      .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 14px;
+      }
+
+      .info-box {
+        background: #f0f7ff;
+        border-left: 4px solid #667eea;
+        padding: 15px 20px;
+        margin-bottom: 30px;
+        border-radius: 4px;
+      }
+
+      .info-box h3 {
+        color: #667eea;
+        margin-bottom: 10px;
+        font-size: 16px;
+      }
+
+      .info-box code {
+        background: #e8f0fe;
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-family: "Courier New", monospace;
+        color: #5f6368;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      th,
+      td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+      }
+
+      tr:hover {
+        background-color: #f8f9fa;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin: 30px 0;
+      }
+
+      button {
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        min-width: 140px;
+      }
+
+      .btn-csv {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .btn-csv:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-excel {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+      }
+
+      .btn-excel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+      }
+
+      .btn-default {
+        background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        color: white;
+      }
+
+      .btn-default:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      .code-section {
+        margin-top: 40px;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+      }
+
+      .code-section pre {
+        margin: 0;
+        font-family: "Courier New", monospace;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .code-section .comment {
+        color: #6a9955;
+      }
+
+      .code-section .keyword {
+        color: #569cd6;
+      }
+
+      .code-section .string {
+        color: #ce9178;
+      }
+
+      .code-section .function {
+        color: #dcdcaa;
+      }
+
+      footer {
+        text-align: center;
+        margin-top: 40px;
+        color: #666;
+        font-size: 14px;
+      }
+
+      footer a {
+        color: #667eea;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🚀 统一导出API示例</h1>
+      <p class="subtitle">
+        excel-exporter v1.2.1 - 使用新的 <code>export_table()</code> 函数
+      </p>
+
+      <div class="info-box">
+        <h3>✨ 新特性：统一的导出接口</h3>
+        <p>
+          现在只需要一个函数 <code>export_table(table_id, filename, format)</code> 就可以导出为不同格式：
+        </p>
+        <ul style="margin-top: 10px; padding-left: 20px">
+          <li><code>ExportFormat.Csv</code> - CSV 格式（默认）</li>
+          <li><code>ExportFormat.Xlsx</code> - Excel 格式</li>
+        </ul>
+      </div>
+
+      <table id="my-table">
+        <thead>
+          <tr>
+            <th>姓名</th>
+            <th>部门</th>
+            <th>职位</th>
+            <th>工号</th>
+            <th>邮箱</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>张三</td>
+            <td>技术部</td>
+            <td>高级工程师</td>
+            <td>E10001</td>
+            <td>zhangsan@example.com</td>
+          </tr>
+          <tr>
+            <td>李四</td>
+            <td>产品部</td>
+            <td>产品经理</td>
+            <td>P20002</td>
+            <td>lisi@example.com</td>
+          </tr>
+          <tr>
+            <td>王五</td>
+            <td>设计部</td>
+            <td>UI设计师</td>
+            <td>D30003</td>
+            <td>wangwu@example.com</td>
+          </tr>
+          <tr>
+            <td>赵六</td>
+            <td>市场部</td>
+            <td>市场专员</td>
+            <td>M40004</td>
+            <td>zhaoliu@example.com</td>
+          </tr>
+          <tr>
+            <td>孙七</td>
+            <td>人力资源部</td>
+            <td>HR经理</td>
+            <td>H50005</td>
+            <td>sunqi@example.com</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="button-group">
+        <button class="btn-default" onclick="exportDefault()">
+          📄 默认导出（CSV）
+        </button>
+        <button class="btn-csv" onclick="exportCsv()">
+          📊 导出为 CSV
+        </button>
+        <button class="btn-excel" onclick="exportExcel()">
+          📗 导出为 Excel
+        </button>
+      </div>
+
+      <div class="code-section">
+        <pre><code><span class="comment">// 导入模块</span>
+<span class="keyword">import</span> init, { <span class="function">export_table</span>, ExportFormat } <span class="keyword">from</span> <span class="string">'./pkg/excel_exporter.js'</span>;
+
+<span class="comment">// 初始化 WebAssembly（只需一次）</span>
+<span class="keyword">await</span> <span class="function">init</span>();
+
+<span class="comment">// 方式 1：默认导出为 CSV（不传 format 参数）</span>
+<span class="function">export_table</span>(<span class="string">'my-table'</span>);  <span class="comment">// → table_export.csv</span>
+<span class="function">export_table</span>(<span class="string">'my-table'</span>, <span class="string">'员工数据'</span>);  <span class="comment">// → 员工数据.csv</span>
+
+<span class="comment">// 方式 2：显式指定为 CSV</span>
+<span class="function">export_table</span>(<span class="string">'my-table'</span>, <span class="string">'员工数据'</span>, ExportFormat.Csv);
+
+<span class="comment">// 方式 3：导出为 Excel</span>
+<span class="function">export_table</span>(<span class="string">'my-table'</span>, <span class="string">'员工数据'</span>, ExportFormat.Xlsx);  <span class="comment">// → 员工数据.xlsx</span>
+</code></pre>
+      </div>
+
+      <footer>
+        <p>
+          Made with ❤️ using
+          <a
+            href="https://github.com/kurisu994/excel-exporter"
+            target="_blank"
+            >excel-exporter</a
+          >
+        </p>
+        <p style="margin-top: 10px; font-size: 12px">
+          🦀 Powered by Rust + WebAssembly
+        </p>
+      </footer>
+    </div>
+
+    <script type="module">
+      import init, {
+        export_table,
+        ExportFormat,
+      } from "../pkg/excel_exporter.js";
+
+      // 初始化 WebAssembly
+      await init();
+
+      // 暴露到全局作用域供按钮使用
+      window.exportDefault = () => {
+        export_table("my-table"); // 默认 CSV
+        console.log("✅ 默认导出完成（CSV格式）");
+      };
+
+      window.exportCsv = () => {
+        export_table("my-table", "员工数据", ExportFormat.Csv);
+        console.log("✅ CSV 导出完成");
+      };
+
+      window.exportExcel = () => {
+        export_table("my-table", "员工数据", ExportFormat.Xlsx);
+        console.log("✅ Excel 导出完成");
+      };
+
+      console.log("🚀 WebAssembly 已初始化，可以使用导出功能");
+    </script>
+  </body>
+</html>
