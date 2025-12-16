@@ -377,7 +377,7 @@ pub fn export_table_to_xlsx(table_id: &str, filename: Option<String>) -> Result<
             // 将单元格写入工作表
             // 忽略写入错误并上抛为 JsValue
             worksheet
-                .write_string(i as u32, j as u16, &cell_text)
+                .write_string(i, j as u16, &cell_text)
                 .map_err(|e| JsValue::from_str(&format!("写入 Excel 单元格失败: {}", e)))?;
         }
     }
@@ -393,9 +393,7 @@ pub fn export_table_to_xlsx(table_id: &str, filename: Option<String>) -> Result<
 
     // 创建 Blob 并下载
     let blob_property_bag = web_sys::BlobPropertyBag::new();
-    blob_property_bag.set_type(
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    );
+    blob_property_bag.set_type("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
     let array = js_sys::Array::of1(&js_sys::Uint8Array::from(&xlsx_bytes[..]));
     let blob = Blob::new_with_u8_array_sequence_and_options(&array, &blob_property_bag)
