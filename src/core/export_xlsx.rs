@@ -12,6 +12,7 @@ use web_sys::{Blob, HtmlAnchorElement, Url};
 /// # 参数
 /// * `table_data` - 表格数据（二维字符串数组）
 /// * `filename` - 可选的导出文件名
+/// * `progress_callback` - 可选的进度回调函数
 ///
 /// # 返回值
 /// * `Ok(())` - 导出成功
@@ -19,18 +20,33 @@ use web_sys::{Blob, HtmlAnchorElement, Url};
 pub fn export_as_xlsx(
     table_data: Vec<Vec<String>>,
     filename: Option<String>,
+    progress_callback: Option<js_sys::Function>,
 ) -> Result<(), JsValue> {
+    let total_rows = table_data.len();
+
+    // 报告初始进度
+    if let Some(ref callback) = progress_callback {
+        let _ = callback.call1(&JsValue::NULL, &JsValue::from_f64(0.0));
+    }
+
     // 创建工作簿与工作表
     let mut workbook = Workbook::new();
     let worksheet = workbook.add_worksheet();
 
-    // 写入所有数据
+    // 写入所有数据，并报告进度
     for (i, row_data) in table_data.iter().enumerate() {
         for (j, cell_text) in row_data.iter().enumerate() {
             worksheet
                 .write_string(i as u32, j as u16, cell_text)
                 .map_err(|e| JsValue::from_str(&format!("写入 Excel 单元格失败: {}", e)))?;
         }
+
+        // 定期报告进度（每10行或最后一行）
+        if let Some(ref callback) = progress_callback
+            && (i % 10 == 0 || i == total_rows - 1) {
+                let progress = ((i + 1) as f64 / total_rows as f64) * 100.0;
+                let _ = callback.call1(&JsValue::NULL, &JsValue::from_f64(progress));
+            }
     }
 
     // 将工作簿写入内存缓冲区

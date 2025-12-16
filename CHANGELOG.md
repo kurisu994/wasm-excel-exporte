@@ -7,39 +7,64 @@
 
 ---
 
-## [Unreleased]
+## [2.0.0] - 2025-12-16
 
-### 🎉 重大更新
+### 💥 破坏性变更
 
-- 🆕 **统一导出API**：新增 `export_table(table_id, filename, format)` 函数
-  - 通过 `ExportFormat` 枚举控制导出格式（Csv 或 Xlsx）
-  - 默认导出为 CSV 格式
-  - 更简洁、更统一的API设计
-  - 示例：`export_table('my-table', '数据', ExportFormat.Xlsx)`
+- 🗑️ **移除所有旧版API**：不再向后兼容，强制使用新的统一API
+  - ❌ 移除 `export_table_to_csv()`
+  - ❌ 移除 `export_table_to_xlsx()`
+  - ❌ 移除 `export_table_to_excel()`
+  - ❌ 移除 `export_table_to_csv_with_progress()`
+  - ✅ **统一使用** `export_table(table_id, filename, format, progress_callback)`
 
-### 🏗️ 架构重构
+### ✨ 新功能
+
+- ✅ **进度回调支持**：所有格式导出都支持实时进度反馈（0-100）
+  - CSV 导出：每10行报告一次进度
+  - Excel 导出：每10行报告一次进度
+  - 进度回调是可选的（第4个参数）
+- 📝 所有示例文件已支持进度回调功能
+
+### 🔄 迁移指南
+
+旧API → 新API 对照表：
+
+```javascript
+// 旧API（已移除）
+export_table_to_csv('my-table', 'data.csv');
+export_table_to_xlsx('my-table', 'data.xlsx');
+export_table_to_csv_with_progress('my-table', 'data.csv', callback);
+
+// 新API（统一接口）
+export_table('my-table', 'data', ExportFormat.Csv);
+export_table('my-table', 'data', ExportFormat.Xlsx);
+export_table('my-table', 'data', ExportFormat.Csv, callback);
+```
+
+### 📁 更新的示例
+
+所有示例文件已更新为使用新API：
+- ✅ `basic-export.html` - 基础导出示例
+- ✅ `advanced-features.html` - 高级功能示例
+- ✅ `progress-export.html` - 进度导出示例（带进度条和实时反馈）
+- ✅ `virtual-scroll-export.html` - 虚拟滚动示例
+
+### 🏗️ 架构优化
 
 - ♻️ **模块化重构**：将 `core.rs` 拆分为 4 个独立模块
-  - `core/mod.rs` - 核心协调模块（4.8KB）
-  - `core/export_csv.rs` - CSV 导出模块（3.2KB）
-  - `core/export_xlsx.rs` - Excel 导出模块（3.4KB）
+  - `core/mod.rs` - 核心协调模块（3.2KB）
+  - `core/export_csv.rs` - CSV 导出模块（3.6KB，支持进度）
+  - `core/export_xlsx.rs` - Excel 导出模块（3.8KB，支持进度）
   - `core/table_extractor.rs` - 表格数据提取模块（2.6KB）
 - ✨ **职责分离**：每个模块单一职责，便于维护和扩展
 - 📚 **新增文档**：`src/core/README.md` 详细说明模块架构
 
-### 已弃用
+### 📊 性能改进
 
-- ⚠️ `export_table_to_csv()` - 请使用 `export_table(table_id, filename, ExportFormat::Csv)`
-- ⚠️ `export_table_to_xlsx()` - 请使用 `export_table(table_id, filename, ExportFormat::Xlsx)`
-- ⚠️ `export_table_to_excel()` - 请使用 `export_table(table_id, filename, ExportFormat::Xlsx)`
-- ⚠️ `export_table_to_csv_with_progress()` - 暂时保留，进度回调将在 v2.0 统一支持
-
-### 改进
-
-- 📝 新增统一API示例：`examples/unified-api.html`
-- ✅ 新增 4 个单元测试覆盖 `ExportFormat` 枚举
-- 🧹 提取公共函数，减少代码重复
-- 📚 更新文档反映新的API设计和模块架构
+- ⚡ 移除向后兼容代码，减少包体积
+- ⚡ 优化进度回调机制
+- ⚡ 清晰的模块边界，提升编译速度
 
 ---
 

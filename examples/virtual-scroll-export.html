@@ -364,7 +364,7 @@
     </div>
 
     <script type="module">
-        import init, { export_table_to_csv } from '../pkg/excel_exporter.js';
+        import init, { export_table, ExportFormat } from '../pkg/excel_exporter.js';
 
         // 全局数据存储
         let tableData = [];
@@ -589,7 +589,7 @@
                 const today = new Date().toISOString().split('T')[0];
                 const filename = `虚拟滚动数据_${today}.csv`;
 
-                export_table_to_csv('large-data-table', filename);
+                export_table('large-data-table', filename);
 
                 const endTime = performance.now();
                 const duration = ((endTime - startTime) / 1000).toFixed(2);

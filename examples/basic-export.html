@@ -3,377 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>基本导出示例 - excel-exporter</title>
+    <title>基础导出示例 - Excel Exporter</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            padding: 40px 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
         }
-
         .container {
+            max-width: 900px;
+            margin: 0 auto;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
             padding: 40px;
-            max-width: 800px;
-            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-        }
-
+        h1 { color: #333; margin-bottom: 10px; font-size: 32px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
         table {
             width: 100%;
             border-collapse: collapse;
             margin: 20px 0;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
         th {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px;
-            text-align: left;
             font-weight: 600;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.5px;
         }
-
-        td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
+        tr:hover { background-color: #f8f9fa; }
         .button-group {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 12px;
             flex-wrap: wrap;
+            margin: 30px 0;
         }
-
         button {
             padding: 12px 24px;
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 600;
-            cursor: pointer;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
+            cursor: pointer;
             transition: all 0.3s ease;
-            color: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            min-width: 140px;
         }
-
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
         }
-
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 4px 12px rgba(102,126,234,0.4);
         }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        .btn-excel {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
         }
-
-        .btn-secondary:hover {
+        .btn-excel:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(240, 147, 251, 0.4);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.4);
         }
-
-        .btn-success {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }
-
-        .btn-success:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(79, 172, 254, 0.4);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        .info-box {
-            background: #e7f3ff;
-            border-left: 4px solid #2196F3;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
-
-        .info-box h3 {
-            color: #2196F3;
-            margin-bottom: 8px;
-            font-size: 16px;
-        }
-
-        .info-box p {
-            color: #555;
-            line-height: 1.6;
-            font-size: 14px;
-        }
-
+        button:active { transform: translateY(0); }
         .code {
-            background: #f5f5f5;
-            padding: 2px 6px;
+            background: #e8f0fe;
+            padding: 2px 8px;
             border-radius: 3px;
             font-family: 'Courier New', monospace;
-            font-size: 13px;
-        }
-
-        .error {
-            background: #ffebee;
-            border-left: 4px solid #f44336;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-            display: none;
-        }
-
-        .error.show {
-            display: block;
-        }
-
-        .error h3 {
-            color: #f44336;
-            margin-bottom: 8px;
-        }
-
-        .success {
-            background: #e8f5e9;
-            border-left: 4px solid #4caf50;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-            display: none;
-        }
-
-        .success.show {
-            display: block;
-        }
-
-        .success h3 {
-            color: #4caf50;
-            margin-bottom: 8px;
+            color: #5f6368;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🚀 基本导出示例</h1>
-        <p class="subtitle">演示 excel-exporter 的基本功能</p>
-
-        <div class="info-box">
-            <h3>📋 功能说明</h3>
-            <p>
-                这个示例展示了如何使用 <span class="code">export_table_to_csv()</span> 函数将 HTML 表格导出为 CSV 文件。
-                点击下面的按钮可以使用不同的文件名导出表格。
-            </p>
-        </div>
+        <h1>📊 基础导出示例</h1>
+        <p class="subtitle">使用 <span class="code">export_table()</span> 函数导出表格</p>
 
         <table id="employees-table">
             <thead>
                 <tr>
-                    <th>员工编号</th>
                     <th>姓名</th>
                     <th>部门</th>
                     <th>职位</th>
-                    <th>入职日期</th>
-                    <th>薪资</th>
+                    <th>工号</th>
+                    <th>邮箱</th>
                 </tr>
             </thead>
             <tbody>
                 <tr>
-                    <td>E001</td>
                     <td>张三</td>
                     <td>技术部</td>
                     <td>高级工程师</td>
-                    <td>2020-03-15</td>
-                    <td>¥15,000</td>
+                    <td>E10001</td>
+                    <td>zhangsan@example.com</td>
                 </tr>
                 <tr>
-                    <td>E002</td>
                     <td>李四</td>
-                    <td>市场部</td>
-                    <td>市场经理</td>
-                    <td>2019-07-22</td>
-                    <td>¥18,000</td>
+                    <td>产品部</td>
+                    <td>产品经理</td>
+                    <td>P20002</td>
+                    <td>lisi@example.com</td>
                 </tr>
                 <tr>
-                    <td>E003</td>
                     <td>王五</td>
-                    <td>人事部</td>
-                    <td>HR 专员</td>
-                    <td>2021-01-10</td>
-                    <td>¥12,000</td>
+                    <td>设计部</td>
+                    <td>UI设计师</td>
+                    <td>D30003</td>
+                    <td>wangwu@example.com</td>
                 </tr>
                 <tr>
-                    <td>E004</td>
                     <td>赵六</td>
-                    <td>技术部</td>
-                    <td>前端开发</td>
-                    <td>2022-05-08</td>
-                    <td>¥13,000</td>
+                    <td>市场部</td>
+                    <td>市场专员</td>
+                    <td>M40004</td>
+                    <td>zhaoliu@example.com</td>
                 </tr>
                 <tr>
-                    <td>E005</td>
                     <td>孙七</td>
-                    <td>财务部</td>
-                    <td>财务主管</td>
-                    <td>2018-11-30</td>
-                    <td>¥20,000</td>
+                    <td>人力资源部</td>
+                    <td>HR经理</td>
+                    <td>H50005</td>
+                    <td>sunqi@example.com</td>
                 </tr>
             </tbody>
         </table>
 
         <div class="button-group">
-            <button class="btn-primary" onclick="exportWithDefaultName()">
-                📥 导出（默认文件名）
-            </button>
-            <button class="btn-secondary" onclick="exportWithCustomName()">
-                📝 导出（自定义文件名）
-            </button>
-            <button class="btn-success" onclick="exportWithDate()">
-                📅 导出（带日期）
-            </button>
-        </div>
-
-        <div class="success" id="success-message">
-            <h3>✅ 导出成功！</h3>
-            <p>文件已开始下载，请检查浏览器的下载文件夹。</p>
-        </div>
-
-        <div class="error" id="error-message">
-            <h3>❌ 导出失败</h3>
-            <p id="error-text"></p>
-        </div>
-
-        <div class="info-box" style="margin-top: 30px;">
-            <h3>💡 使用提示</h3>
-            <p>
-                • 默认文件名：使用 <span class="code">table_export.csv</span><br>
-                • 自定义文件名：可以指定任意合法的文件名<br>
-                • 带日期：自动在文件名中添加当前日期<br>
-                • 所有导出的文件都是 UTF-8 编码的 CSV 格式
-            </p>
+            <button class="btn-primary" onclick="exportDefault()">📄 导出为 CSV（默认）</button>
+            <button class="btn-primary" onclick="exportWithFilename()">📄 导出为 CSV（自定义文件名）</button>
+            <button class="btn-excel" onclick="exportExcel()">📗 导出为 Excel</button>
         </div>
     </div>
 
     <script type="module">
-        import init, { export_table_to_csv } from '../pkg/excel_exporter.js';
-
-        // 初始化 WASM 模块
-        let wasmInitialized = false;
-        async function initWasm() {
-            if (!wasmInitialized) {
-                try {
-                    await init();
-                    wasmInitialized = true;
-                    console.log('✅ WASM 模块初始化成功');
-                } catch (error) {
-                    showError('WASM 模块初始化失败: ' + error);
-                    throw error;
-                }
-            }
-        }
-
-        // 显示成功消息
-        function showSuccess() {
-            const successDiv = document.getElementById('success-message');
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.classList.remove('show');
-            successDiv.classList.add('show');
-            setTimeout(() => {
-                successDiv.classList.remove('show');
-            }, 3000);
-        }
-
-        // 显示错误消息
-        function showError(message) {
-            const errorDiv = document.getElementById('error-message');
-            const successDiv = document.getElementById('success-message');
-            const errorText = document.getElementById('error-text');
-            successDiv.classList.remove('show');
-            errorText.textContent = message;
-            errorDiv.classList.add('show');
-        }
-
-        // 导出函数 - 使用默认文件名
-        window.exportWithDefaultName = async function() {
-            try {
-                await initWasm();
-                export_table_to_csv('employees-table');
-                showSuccess();
-                console.log('📥 导出成功（默认文件名）');
-            } catch (error) {
-                showError('导出失败: ' + error);
-                console.error('❌ 导出失败:', error);
-            }
+        import init, { export_table, ExportFormat } from '../pkg/excel_exporter.js';
+        
+        // 初始化 WebAssembly
+        await init();
+        
+        // 导出为 CSV（默认文件名）
+        window.exportDefault = () => {
+            export_table('employees-table');
+            console.log('✅ 导出为 CSV 完成（默认文件名）');
         };
-
-        // 导出函数 - 使用自定义文件名
-        window.exportWithCustomName = async function() {
-            try {
-                await initWasm();
-                export_table_to_csv('employees-table', '员工信息表.csv');
-                showSuccess();
-                console.log('📥 导出成功（自定义文件名）');
-            } catch (error) {
-                showError('导出失败: ' + error);
-                console.error('❌ 导出失败:', error);
-            }
+        
+        // 导出为 CSV（自定义文件名）
+        window.exportWithFilename = () => {
+            export_table('employees-table', '员工信息表.csv');
+            console.log('✅ 导出为 CSV 完成（自定义文件名）');
         };
-
-        // 导出函数 - 使用带日期的文件名
-        window.exportWithDate = async function() {
-            try {
-                await initWasm();
-                const today = new Date().toISOString().split('T')[0];
-                const filename = `员工信息_${today}.csv`;
-                export_table_to_csv('employees-table', filename);
-                showSuccess();
-                console.log('📥 导出成功（带日期）:', filename);
-            } catch (error) {
-                showError('导出失败: ' + error);
-                console.error('❌ 导出失败:', error);
-            }
+        
+        // 导出为 Excel
+        window.exportExcel = () => {
+            export_table('employees-table', '员工信息表', ExportFormat.Xlsx);
+            console.log('✅ 导出为 Excel 完成');
         };
-
-        // 页面加载时初始化
-        initWasm().catch(error => {
-            console.error('初始化失败:', error);
-        });
+        
+        console.log('🚀 WebAssembly 已初始化，可以使用导出功能');
     </script>
 </body>
 </html>
-

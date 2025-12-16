@@ -13,6 +13,7 @@ use web_sys::{Blob, HtmlAnchorElement, Url};
 /// # 参数
 /// * `table_data` - 表格数据（二维字符串数组）
 /// * `filename` - 可选的导出文件名
+/// * `progress_callback` - 可选的进度回调函数
 ///
 /// # 返回值
 /// * `Ok(())` - 导出成功
@@ -20,14 +21,29 @@ use web_sys::{Blob, HtmlAnchorElement, Url};
 pub fn export_as_csv(
     table_data: Vec<Vec<String>>,
     filename: Option<String>,
+    progress_callback: Option<js_sys::Function>,
 ) -> Result<(), JsValue> {
+    let total_rows = table_data.len();
+
+    // 报告初始进度
+    if let Some(ref callback) = progress_callback {
+        let _ = callback.call1(&JsValue::NULL, &JsValue::from_f64(0.0));
+    }
+
     // 创建一个 CSV 写入器
     let mut wtr = Writer::from_writer(Cursor::new(Vec::new()));
 
-    // 写入所有数据
-    for row_data in table_data {
+    // 写入所有数据，并报告进度
+    for (index, row_data) in table_data.into_iter().enumerate() {
         wtr.write_record(&row_data)
             .map_err(|e| JsValue::from_str(&format!("写入 CSV 数据失败: {}", e)))?;
+
+        // 定期报告进度（每10行或最后一行）
+        if let Some(ref callback) = progress_callback
+            && (index % 10 == 0 || index == total_rows - 1) {
+                let progress = ((index + 1) as f64 / total_rows as f64) * 100.0;
+                let _ = callback.call1(&JsValue::NULL, &JsValue::from_f64(progress));
+            }
     }
 
     // 安全地完成 CSV 写入

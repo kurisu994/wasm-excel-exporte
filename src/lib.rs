@@ -13,15 +13,9 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 pub use validation::{ensure_extension, validate_filename};
 
 // 导出新的统一接口
-pub use core::{ExportFormat, export_table};
+pub use core::{export_table, ExportFormat};
 
-// 向后兼容：导出已弃用的函数
-#[allow(deprecated)]
-pub use core::{
-    export_table_to_csv, export_table_to_csv_with_progress, export_table_to_excel,
-    export_table_to_xlsx,
-};
-
+// 导出分批异步导出
 pub use batch_export::export_table_to_csv_batch;
 
 // 导出 utils 模块的公共函数

@@ -1,12 +1,12 @@
 [package]
 name = "excel-exporter"
-version = "1.2.1"
+version = "2.0.0"
 authors = ["Kurisu <makise_kurisuu@outlook.jp>"]
 edition = "2024"
-description = "一个安全高效的 WebAssembly 库，用于将 HTML 表格数据导出为 CSV 文件"
+description = "一个安全高效的 WebAssembly 库，用于将 HTML 表格数据导出为 CSV 和 XLSX 文件"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/kurisu994/excel-exporter"
-keywords = ["wasm", "csv", "export", "table", "webassembly"]
+keywords = ["wasm", "csv", "xlsx", "export", "table"]
 categories = ["wasm", "web-programming", "encoding"]
 readme = "README.md"
 

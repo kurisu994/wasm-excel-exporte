@@ -21,14 +21,15 @@ pub enum ExportFormat {
     Xlsx,
 }
 
-/// 统一的表格导出函数
+/// 统一的表格导出函数（带进度回调）
 ///
-/// 支持导出为 CSV 或 Excel 格式，通过 format 参数控制
+/// 支持导出为 CSV 或 Excel 格式，通过 format 参数控制，支持进度回调
 ///
 /// # 参数
 /// * `table_id` - 要导出的 HTML 表格元素的 ID
 /// * `filename` - 可选的导出文件名（不包含扩展名时会自动添加）
 /// * `format` - 导出格式（Csv 或 Xlsx），默认为 Csv
+/// * `progress_callback` - 可选的进度回调函数，接收 0-100 的进度值
 ///
 /// # 返回值
 /// * `Ok(())` - 导出成功
@@ -39,20 +40,26 @@ pub enum ExportFormat {
 /// import init, { export_table, ExportFormat } from './pkg/excel_exporter.js';
 /// await init();
 ///
-/// // 导出为 CSV（默认）
+/// // 导出为 CSV（默认，无进度回调）
 /// export_table('my-table');
 /// export_table('my-table', '数据.csv');
-/// export_table('my-table', '数据', ExportFormat.Csv);
 ///
-/// // 导出为 Excel
-/// export_table('my-table', '报表.xlsx', ExportFormat.Xlsx);
-/// export_table('my-table', '报表', ExportFormat.Xlsx);
+/// // 导出为 CSV（带进度回调）
+/// export_table('my-table', '数据', ExportFormat.Csv, (progress) => {
+///     console.log(`进度: ${progress.toFixed(1)}%`);
+/// });
+///
+/// // 导出为 Excel（带进度回调）
+/// export_table('my-table', '报表', ExportFormat.Xlsx, (progress) => {
+///     document.getElementById('progress').style.width = `${progress}%`;
+/// });
 /// ```
 #[wasm_bindgen]
 pub fn export_table(
     table_id: &str,
     filename: Option<String>,
     format: Option<ExportFormat>,
+    progress_callback: Option<js_sys::Function>,
 ) -> Result<(), JsValue> {
     let format = format.unwrap_or_default();
 
@@ -66,83 +73,8 @@ pub fn export_table(
 
     // 根据格式导出
     match format {
-        ExportFormat::Csv => export_as_csv(table_data, filename),
-        ExportFormat::Xlsx => export_as_xlsx(table_data, filename),
+        ExportFormat::Csv => export_as_csv(table_data, filename, progress_callback),
+        ExportFormat::Xlsx => export_as_xlsx(table_data, filename, progress_callback),
     }
 }
 
-// ===========================
-// 向后兼容的已弃用函数
-// ===========================
-
-/// 安全地导出 HTML 表格到 CSV 文件
-///
-/// **已弃用**：请使用 `export_table(table_id, filename, ExportFormat::Csv)` 替代
-///
-/// # 参数
-/// * `table_id` - 要导出的 HTML 表格元素的 ID
-/// * `filename` - 可选的导出文件名（可选，默认为 "table_export.csv"）
-///
-/// # 返回值
-/// * `Ok(())` - 导出成功
-/// * `Err(JsValue)` - 导出失败，包含错误信息
-#[wasm_bindgen]
-#[deprecated(note = "请使用 export_table(table_id, filename, ExportFormat::Csv) 替代")]
-pub fn export_table_to_csv(table_id: &str, filename: Option<String>) -> Result<(), JsValue> {
-    export_table(table_id, filename, Some(ExportFormat::Csv))
-}
-
-/// 导出 HTML 表格到 CSV 文件（带进度回调）
-///
-/// **已弃用**：暂时保留向后兼容，功能与 export_table_to_csv 相同（进度回调将在 v2.0 统一支持）
-///
-/// # 参数
-/// * `table_id` - 要导出的 HTML 表格元素的 ID
-/// * `filename` - 可选的导出文件名（可选，默认为 "table_export.csv"）
-/// * `progress_callback` - 进度回调函数（当前版本忽略此参数）
-///
-/// # 返回值
-/// * `Ok(())` - 导出成功
-/// * `Err(JsValue)` - 导出失败，包含错误信息
-#[wasm_bindgen]
-#[deprecated(
-    note = "请使用 export_table(table_id, filename, ExportFormat::Csv)，进度回调将在 v2.0 统一支持"
-)]
-#[allow(unused_variables)]
-pub fn export_table_to_csv_with_progress(
-    table_id: &str,
-    filename: Option<String>,
-    progress_callback: Option<js_sys::Function>,
-) -> Result<(), JsValue> {
-    // 当前版本忽略进度回调，直接导出
-    // TODO: v2.0 将统一支持进度回调
-    export_table(table_id, filename, Some(ExportFormat::Csv))
-}
-
-/// 导出 HTML 表格到 Excel .xlsx 文件
-///
-/// **已弃用**：请使用 `export_table(table_id, filename, ExportFormat::Xlsx)` 替代
-///
-/// # 参数
-/// * `table_id` - 要导出的 HTML 表格元素的 ID
-/// * `filename` - 可选的导出文件名（可选，默认为 "table_export.xlsx"）
-///
-/// # 返回值
-/// * `Ok(())` - 导出成功
-/// * `Err(JsValue)` - 导出失败，包含错误信息
-#[wasm_bindgen]
-#[deprecated(note = "请使用 export_table(table_id, filename, ExportFormat::Xlsx) 替代")]
-pub fn export_table_to_xlsx(table_id: &str, filename: Option<String>) -> Result<(), JsValue> {
-    export_table(table_id, filename, Some(ExportFormat::Xlsx))
-}
-
-/// 为了向后兼容保留的函数（不推荐使用）
-///
-/// **已弃用**：请使用 `export_table(table_id, filename, ExportFormat::Xlsx)` 替代
-#[wasm_bindgen]
-#[deprecated(note = "请使用 export_table(table_id, filename, ExportFormat::Xlsx) 替代")]
-#[allow(deprecated)]
-pub fn export_table_to_excel(table_id: &str) -> Result<(), JsValue> {
-    // 为老接口提供向后兼容，默认文件名
-    export_table_to_xlsx(table_id, None)
-}
